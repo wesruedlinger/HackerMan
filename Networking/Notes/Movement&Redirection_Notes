@@ -1,0 +1,104 @@
+<-------SCP Syntax------>
+scp student@172.16.82.106:secretstuff.txt /home/student	 #Download from remote to local
+
+scp secretstuff.txt student@172.16.82.106:/home/student	 #Upload from remote to local
+
+scp -3 student@172.16.82.106:/home/student/secretstuff.txt student@172.16.82.112:/home/student		#Copy a file from remote host to a seperate remote host
+
+<----SCP Using Alternate Port Other Than 22---->
+#Download a file from a remote directory to a local directory
+scp -P 1111 student@172.16.82.106:secretstuff.txt /home/student
+
+#Upload a file to a remote directory from a local directory
+scp -P 1111 secretstuff.txt student@172.16.82.106:/home/student
+
+<--------SCP Syntax through a Tunnel-------->
+ssh student@172.16.82.106 -L 1111:localhost:22 -NT
+
+#Download a file from a remote directory to a local directory
+scp -P 1111 student@localhost:secretstuff.txt /home/student
+
+#Upload a file to a remote directory from a local directory
+scp -P 1111 secretstuff.txt student@localhost:/home/student
+
+<---------Data Transfer w/ Netcat-------->
+#NETCAT: Client to listener file transfer
+Client (sends file): nc 10.2.0.2 9001 < file.txt
+Listener (receive file): nc -l -p 9001 > newfile.txt
+
+<---------Relays w/ Netcat-------->
+#On Client Relay:
+mkfifo mypipe
+nc 10.1.0.2 9002 0< mypipe | nc 10.2.0.2 9001 1> mypipe
+
+#On Listener2 (sends info):
+nc -l -p 9002 < infile.txt
+
+#On Listener1 (receives info):
+nc -l -p 9001 > outfile.txt
+###Writes the output to listener1 and listener2 through the named pipe
+
+<----File Transfer with /dev/tcp---->
+#On the receiving box:
+nc -l -p 1111 > file.txt
+
+#On the sending box:
+cat file.txt > /dev/tcp/10.2.0.2/1111
+###This method is useful for host that does not have NETCAT available.
+
+<--------SSH Local Port Forwarding-------->
+#Syntax
+ssh <user>@<pivot ip> -p <optional alt port> -L <local bind port>:<tgt ip>:<tgt port> -NT
+--or--
+ssh -L <local bind port>:<tgt ip>:<tgt port> <user>@<pivot ip> -p <alt port> -NT
+-----------------------------------------------------------------
+#Example 1: Creates a local port (1111) on the local host that forwards to a target machine’s port 80.
+ssh student@10.2.0.2 -L 1111:34.233.98.14:80 -NT
+--or--
+ssh -L 1111:34.233.98.14:80 student@10.2.0.2 -NT
+--------------------------------------------------------------------
+#Example 2: Setting up a tunnel from attacker to target(as pivot) that targets itself(as point of interest)
+ssh student@172.16.82.106 -L 7000:localhost:80 -NT (add -g for global)
+
+#Access the Tunnel made above (have to use http since thats the port we tunneled to)
+curl localhost:7000
+------------------------------------------------------------------
+#Example 3: Setting up a tunnel from attacker THROUGH a pivot to target
+ssh student@172.16.82.106 -L 7000:172.16.82.112:80 -NT
+
+#Access the Tunnel made above (have to use http since thats the port we tunneled to)
+curl localhost:7000
+--or--
+wget -r localhost:7000	(will over write each time)
+--------------------------------------------------------------------
+#Example 4: Setting up tunnel from attacker to pivot ssh port
+ssh student@172.16.82.106 -L 7000:localhost:22 -NT
+ssh student@localhost -p 7000 -L 7010:172.16.82.112:80 -NT
+wget localhost 7010
+
+<--------------SSH Dynamic Port Forwarding------------>
+#Syntax:	*Proxychains default port is 9050*
+ssh -D <port> -p <alt port> <user>@<pivot ip> -NT
+
+#Example 1: Setting up proxying chain to make it look like all commands come from our pivot.
+ssh student@172.16.82.106 -D 9050 -NT		#limited to one hop
+
+#Using the proxy chain just created
+proxychains nc localhost 80		#or any other tcp network commands 
+--------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
