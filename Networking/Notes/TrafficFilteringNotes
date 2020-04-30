@@ -1,0 +1,203 @@
+<----------IPTABLES--------->
+#Syntax
+iptables -t [table] -A [chain] [rules] -j [action]
+
+Tables:
+filter(Default), NAT, mangle
+
+Chains:
+filter= INPUT, FORWARD, OUTPUT
+nat= PREROUTING, POSTROUTING, and OUTPUT
+mangle= PREROUTING, POSTROUTING, INPUT, FORWARD and OUTPUT
+
+Rules:
+-i or -o [iface]	# inbound or outbound
+-s or -d [ip.add | network/mask]	# source or destination
+-p [protocol(in ipv4 header)]
+-m is used with:	#match
+  state --state [state]
+  mac [--mac-source | --mac-destination] [mac]
+  tcp | udp [--dport | --sport] [port | port1:port2]
+  multiport [--sports | --dports | --ports]
+                [port1,[port2,[port3:port15]]]
+  bpf --bytecode [ 'bytecode' ]
+
+Actions:
+ACCEPT (default), REJECT, DROP
+
+<-----MODIFY IPTABLES----->
+#Flush table
+iptables -t [table] -F
+
+#Change default policy
+iptables -t [table] -P [chain] [action]
+
+#Lists rules with rule numbers
+iptables -t [table] -L --line-numbers
+
+#Lists rules as commands interpreted by the system
+iptables -t [table] -S
+
+#Inserts rule before Rule number
+iptables -t [table] -I [chain] [rule num] [rules] -j [action]
+
+#Deletes rule at number
+iptables -t [table] -D [chain] [rule num]
+
+===============================================================
+<-----IPTABLES DEMO------>
+#view filter table defaults
+sudo iptables -L
+
+#view mangle table defaults
+sudo iptables -t mangle -L
+
+#view nat table defaults
+sudo iptables -t nat -L
+
+#Show current policies
+sudo iptables -S
+
+#Change policy
+sudo iptables -P FORWARD ACCEPT
+
+#Set rule stoping internet-host from coming to blue-host-1 port 80
+sudo iptables -A INPUT -s 10.10.0.40 -p tcp --dport 80 -j DROP
+
+#Show line numbers
+sudo iptables -nL --line-numbers
+
+#Del a line
+sudo iptables -D INPUT 1
+
+#Create a rule using match that filters NEW connections
+sudo iptables -A INPUT -s 10.10.0.40 -p tcp --dport 80 -j DROP -m state --state NEW
+
+#filter multiple ports
+sudo iptables -A INPUT -s 10.10.0.40 -p tcp -m multiport--dports 80 -j DROP
+
+===============================================================
+<-----NFTABLES------>
+Chains:
+filter - to filter packets - can be used with arp, bridge, ip, ip6, and inet families
+route - to reroute packets - can be used with ip and ipv6 families only
+nat - used for Network Address Translation - used with ip and ip6 table families only
+
+#Step 1: Create a table 
+nft add table [family] [table]
+
+[family] = ip, ip6, inet, arp, bridge and netdev.
+[table] = user provided name for the table.
+
+#Step 2: Create the Base Chain
+nft add chain [family] [table] [chain] { type [type] hook [hook]
+    priority [priority] \; policy [policy] \;}
+
+[chain] = User defined name for the chain.
+
+[type] =  can be filter, route or nat.
+
+[hook] = prerouting, ingress, input, forward, output or
+         postrouting.
+
+[priority] = user provided integer. Lower number = higher
+             priority. default = 0. Use "--" before
+             negative numbers.
+
+; [policy] ; = set policy for the chain. Can be
+              accept (default) or drop.
+
+ Use "\" to escape the ";" in bash
+
+#Step 3: Create a rule in the Chain
+nft add rule [family] [table] [chain] [matches (matches)] [statement]
+
+[matches] = typically protocol headers(i.e. ip, ip6, tcp,
+            udp, icmp, ether, etc)
+
+(matches) = these are specific to the [matches] field.
+
+[statement] = action performed when packet is matched. Some
+              examples are: log, accept, drop, reject,
+              counter, nat (dnat, snat, masquerade)
+------------------------------------------------------------------
+<----------MODIFY NFTABLES------>
+nft {list | flush} ruleset
+nft {delete | list | flush } table [family] [table]
+nft {delete | list | flush } chain [family] [table] [chain]
+
+nft list table [family] [table] [-a]
+#Adds after position
+nft add rule [family] [table] [chain] [position <position>] [matches (matches)] [statement]
+
+#Inserts before position
+nft insert rule [family] [table] [chain] [position <position>] [matches (matches)] [statement]
+
+#Replaces rule at handle
+nft replace rule [family] [table] [chain] [handle <handle>] [matches (matches)] [statement]
+
+#Deletes rule at handle
+nft delete rule [family] [table] [chain] [handle <handle>]
+
+===============================================================
+<-----NFTABLES DEMO------>
+#View rules
+sudo nft list rulset
+-n	no name resolution
+-nn	no port resolution
+-ann	handle number
+
+#create a table 
+sudo nft add table ip box
+
+#create base chain
+sudo nft add chain ip box shoe { type filter hook input priority 0 \; policy accept \;}
+
+#create a rule in the Chain
+sudo nft add rule ip box shoe tcp dport 80 drop
+
+#delete a rule
+sudo nft delete rule ip box shoe handle <#>
+
+#Insert a new rule into a specific position
+sudo nft insert rule ip box shoe postion 2 tcp dport 80 drop
+
+#drop icmp request rule
+sudo nft insert rule ip box flipflop icmp type echo-request drop
+
+===============================================================
+<-----NAT w/ IPTABLES------>
+#changing the source IP address
+iptables -t nat -A POSTROUTING -o eth0 -j SNAT --to 1.1.1.1
+
+#changing the destination IP address
+iptables -t nat -A PREROUTING -i eth0 -j DNAT --to 10.0.0.1
+
+#changing source IP and Port
+iptables -t nat -A POSTROUTING -p tcp -o eth0 -j SNAT --to 1.1.1.1:9001
+
+===============================================================
+<-----NAT w/ NFTABLES------>
+##Create the NAT table
+nft add table ip NAT
+
+##Create the NAT chains
+nft add chain ip NAT PREROUTING {type nat hook prerouting priority 0 \; }
+nft add chain ip NAT POSTROUTING {type nat hook postrouting priority 100 \; }
+
+##Create the NAT rules
+#Source NAT
+nft add rule ip NAT POSTROUTING ip saddr 10.1.0.2 oif eth0 snat 144.15.60.11
+
+#Destination NAT
+nft add rule ip NAT PREROUTING iif eth0 tcp dport { 80, 443 } dnat 10.1.0.3
+
+#Source NAT w/ masquesrade
+nft add rule ip NAT POSTROUTING ip saddr 10.1.0.0/24 oif eth0 masquerade
+
+#Destination NAT (port forwarding) with redirect
+nft add rule ip NAT PREROUTING tcp dport 80 redirect to 8080
+
+
+
+
