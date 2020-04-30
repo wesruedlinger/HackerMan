@@ -1,202 +1,127 @@
-<----------IPTABLES--------->
-#Syntax
-iptables -t [table] -A [chain] [rules] -j [action]
+Pivot
+Hostname: INTERNET_HOST
+IP: 10.10.0.40 (Use the provided floating IP only for login from outside of the network
 
-Tables:
-filter(Default), NAT, mangle
+T1
+Hostname: BLUE_Host-1
+IP: 172.16.82.106
 
-Chains:
-filter= INPUT, FORWARD, OUTPUT
-nat= PREROUTING, POSTROUTING, and OUTPUT
-mangle= PREROUTING, POSTROUTING, INPUT, FORWARD and OUTPUT
+T2
+Hostname: BLUE_Host-3
+IP: 172.16.82.112
 
-Rules:
--i or -o [iface]	# inbound or outbound
--s or -d [ip.add | network/mask]	# source or destination
--p [protocol(in ipv4 header)]
--m is used with:	#match
-  state --state [state]
-  mac [--mac-source | --mac-destination] [mac]
-  tcp | udp [--dport | --sport] [port | port1:port2]
-  multiport [--sports | --dports | --ports]
-                [port1,[port2,[port3:port15]]]
-  bpf --bytecode [ 'bytecode' ]
+T3
+Hostname: BLUE_INT_DMZ_HOST-1
+IP: 172.16.40.10
 
-Actions:
-ACCEPT (default), REJECT, DROP
+T4
+Hostname: (Will be provided by Mission Command)
+IP: 10.50.XXX.XXX (Will be Provided by Mission Command)
+creds: studentX:passwordX (X = Student Number)
+Known Ports: Unknown
+Action: Interrogate Target and validate Signatures
 
-<-----MODIFY IPTABLES----->
-#Flush table
-iptables -t [table] -F
+T5
+Hostname: BLUE_PRIV_HOST-1
+IP: 192.168.1.10
+creds: student : password
+Action: Allow traffic through NAT Capabilities
 
-#Change default policy
-iptables -t [table] -P [chain] [action]
+T6
+Hostname: BLUE_PRIV_HOST-3
+IP: 192.168.3.30
+creds: student : password
+Action: Allow traffic through NAT Capabilities
+---------------------------------------------------------------------------
+#From T1--Blue_Host1--172.16.82.106
+Objective 1: Allow New and Established traffic to/from via SSH, TELNET, and RDP
+sudo iptables -A INPUT -m state --state NEW -p tcp -m multiport --ports 22,23,3389 -j ACCEPT
+sudo iptables -A INPUT -m state --state ESTABLISHED -p tcp -m multiport --ports 22,23,3389 -j ACCEPT
+sudo iptables -A OUTPUT -m state --state NEW -p tcp -m multiport --ports 22,23,3389 -j ACCEPT
+sudo iptables -A OUTPUT -m state --state ESTABLISHED -p tcp -m multiport --ports 22,23,3389 -j ACCEPT
 
-#Lists rules with rule numbers
-iptables -t [table] -L --line-numbers
+#From T1--Blue_Host1--172.16.82.106
+Objective 2: Change the Default Policy in the Filter Table for the INPUT, OUTPUT, and FORWARD chains to DROP
+sudo iptables -t filter -P INPUT DROP
+sudo iptables -t filter -P OUTPUT DROP
+sudo iptables -t filter -P FORWARD DROP
 
-#Lists rules as commands interpreted by the system
-iptables -t [table] -S
+#From T1--Blue_Host1--172.16.82.106
+Objective 3: Only allow Pivot to perform ping (ICMP) operations to/from
+sudo iptables -A OUTPUT -p icmp -d 10.10.0.40 -j ACCEPT
+sudo iptables -A INPUT -p icmp -s 10.10.0.40 -j ACCEPT
 
-#Inserts rule before Rule number
-iptables -t [table] -I [chain] [rule num] [rules] -j [action]
+#From T1--Blue_Host1--172.16.82.106
+Objective 4: Allow ports 6579 and 4444 for both udp and tcp traffic
+sudo iptables -A INPUT -p tcp -m multiport --ports 6579,4444 -j ACCEPT
+sudo iptables -A OUTPUT -p tcp -m multiport --ports 6579,4444 -j ACCEPT
+sudo iptables -A INPUT -p udp -m multiport --ports 6579,4444 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -m multiport --ports 6579,4444 -j ACCEPT
 
-#Deletes rule at number
-iptables -t [table] -D [chain] [rule num]
+#From T1--Blue_Host1--172.16.82.106
+Objective 5: Allow New and Established traffic to/from via HTTP
+sudo iptables -A INPUT -m state --state NEW,ESTABLISHED -p tcp --sport 80 -j ACCEPT
+sudo iptables -A INPUT -m state --state NEW,ESTABLISHED -p tcp --dport 80 -j ACCEPT
+sudo iptables -A OUTPUT -m state --state NEW,ESTABLISHED -p tcp --sport 80 -j ACCEPT
+sudo iptables -A OUTPUT -m state --state NEW,ESTABLISHED -p tcp --dport 80 -j ACCEPT
 
-===============================================================
-<-----IPTABLES DEMO------>
-#view filter table defaults
-sudo iptables -L
+-----------------------------------------------------------------------------------
+#From T3---BLUE_INT_DMZ_HOST-1---172.16.40.10
+Objective 1: Allow New and Established traffic to/from via SSH, TELNET, and RDP
+sudo iptables -A INPUT -m state --state NEW -p tcp -m multiport --ports 22,23,3389 -j ACCEPT
+sudo iptables -A INPUT -m state --state ESTABLISHED -p tcp -m multiport --ports 22,23,3389 -j ACCEPT
+sudo iptables -A OUTPUT -m state --state NEW -p tcp -m multiport --ports 22,23,3389 -j ACCEPT
+sudo iptables -A OUTPUT -m state --state ESTABLISHED -p tcp -m multiport --ports 22,23,3389 -j ACCEPT
 
-#view mangle table defaults
-sudo iptables -t mangle -L
+#From T3---BLUE_INT_DMZ_HOST-1---172.16.40.10
+Objective 2: Change the Default Policy in the Filter Table for the INPUT, OUTPUT, and FORWARD chains to DROP
+sudo iptables -t filter -P INPUT DROP
+sudo iptables -t filter -P OUTPUT DROP
+sudo iptables -t filter -P FORWARD DROP
 
-#view nat table defaults
-sudo iptables -t nat -L
+#From T3---BLUE_INT_DMZ_HOST-1---172.16.40.10
+Objective 3: Allow New and Established traffic to/from via HTTP
+sudo iptables -A INPUT -m state --state NEW,ESTABLISHED -p tcp --sport 80 -j ACCEPT
+sudo iptables -A INPUT -m state --state NEW,ESTABLISHED -p tcp --dport 80 -j ACCEPT
+sudo iptables -A OUTPUT -m state --state NEW,ESTABLISHED -p tcp --sport 80 -j ACCEPT
+sudo iptables -A OUTPUT -m state --state NEW,ESTABLISHED -p tcp --dport 80 -j ACCEPT
+-----------------------------------------------------------------------------------
+#From T2---BLUE_Host-3---172.16.82.112
+Objective 1: Create input and output base chains with: <Hooks> <Priority of 0> <Policy as Accept>
+sudo nft add table ip CCTC
+sudo nft add chain ip CCTC Hookin { type filter hook input priority 0 \; policy accept \;}
+sudo nft add chain ip CCTC Hookout { type filter hook output priority 0 \; policy accept \;}
 
-#Show current policies
-sudo iptables -S
+Objective 2: Allow New and Established traffic to/from via SSH, TELNET, and RDP
+sudo nft add rule ip CCTC Hookin tcp sport { 22, 23, 3389} ct state {new, established}
+sudo nft add rule ip CCTC Hookin tcp dport { 22, 23, 3389} ct state {new, established}
+sudo nft add rule ip CCTC Hookout tcp sport { 22, 23, 3389} ct state {new, established}
+sudo nft add rule ip CCTC Hookout tcp dport { 22, 23, 3389} ct state {new, established}
 
-#Change policy
-sudo iptables -P FORWARD ACCEPT
+Objective 3: Change your chains to now have a policy of Drop
+sudo nft replace chain ip CCTC Hookin { type filter hook input priority 0 \; policy drop \;}
+sudo nft replace chain ip CCTC Hookout { type filter hook output priority 0 \; policy drop \;}
 
-#Set rule stoping internet-host from coming to blue-host-1 port 80
-sudo iptables -A INPUT -s 10.10.0.40 -p tcp --dport 80 -j DROP
+Objective 4: Only allow Pivot to perform ping (ICMP) operations to/from
 
-#Show line numbers
-sudo iptables -nL --line-numbers
 
-#Del a line
-sudo iptables -D INPUT 1
+Objective 5: Allow ports 5050 and 5150 for both udp and tcp traffic
 
-#Create a rule using match that filters NEW connections
-sudo iptables -A INPUT -s 10.10.0.40 -p tcp --dport 80 -j DROP -m state --state NEW
 
-#filter multiple ports
-sudo iptables -A INPUT -s 10.10.0.40 -p tcp -m multiport--dports 80 -j DROP
+Ojective 6: Allow New and Established traffic to/from via HTTP
 
-===============================================================
-<-----NFTABLES------>
-Chains:
-filter - to filter packets - can be used with arp, bridge, ip, ip6, and inet families
-route - to reroute packets - can be used with ip and ipv6 families only
-nat - used for Network Address Translation - used with ip and ip6 table families only
 
-#Step 1: Create a table 
-nft add table [family] [table]
+-----------------------------------------------------------------------------------
+#From T5---Blue_Priv_Host-1---192.168.1.10
+Objective: Configure POSTROUTING chain to translate T5 IP address to T1 (Create the rule by specifying the Layer 2 information first then Layer 3)
 
-[family] = ip, ip6, inet, arp, bridge and netdev.
-[table] = user provided name for the table.
+Step 1: Set default gateway for traffic from T5 to go to T1
+ssh 192.168.1.10 (T5)
+sudo route add default gw 192.168.1.1 eth0
+ip route	#check that it took
 
-#Step 2: Create the Base Chain
-nft add chain [family] [table] [chain] { type [type] hook [hook]
-    priority [priority] \; policy [policy] \;}
-
-[chain] = User defined name for the chain.
-
-[type] =  can be filter, route or nat.
-
-[hook] = prerouting, ingress, input, forward, output or
-         postrouting.
-
-[priority] = user provided integer. Lower number = higher
-             priority. default = 0. Use "--" before
-             negative numbers.
-
-; [policy] ; = set policy for the chain. Can be
-              accept (default) or drop.
-
- Use "\" to escape the ";" in bash
-
-#Step 3: Create a rule in the Chain
-nft add rule [family] [table] [chain] [matches (matches)] [statement]
-
-[matches] = typically protocol headers(i.e. ip, ip6, tcp,
-            udp, icmp, ether, etc)
-
-(matches) = these are specific to the [matches] field.
-
-[statement] = action performed when packet is matched. Some
-              examples are: log, accept, drop, reject,
-              counter, nat (dnat, snat, masquerade)
-------------------------------------------------------------------
-<----------MODIFY NFTABLES------>
-nft {list | flush} ruleset
-nft {delete | list | flush } table [family] [table]
-nft {delete | list | flush } chain [family] [table] [chain]
-
-nft list table [family] [table] [-a]
-#Adds after position
-nft add rule [family] [table] [chain] [position <position>] [matches (matches)] [statement]
-
-#Inserts before position
-nft insert rule [family] [table] [chain] [position <position>] [matches (matches)] [statement]
-
-#Replaces rule at handle
-nft replace rule [family] [table] [chain] [handle <handle>] [matches (matches)] [statement]
-
-#Deletes rule at handle
-nft delete rule [family] [table] [chain] [handle <handle>]
-
-===============================================================
-<-----NFTABLES DEMO------>
-#View rules
-sudo nft list rulset
--n	no name resolution
--nn	no port resolution
--ann	handle number
-
-#create a table 
-sudo nft add table ip box
-
-#create base chain
-sudo nft add chain ip box shoe { type filter hook input priority 0 \; policy accept \;}
-
-#create a rule in the Chain
-sudo nft add rule ip box shoe tcp dport 80 drop
-
-#delete a rule
-sudo nft delete rule ip box shoe handle <#>
-
-#Insert a new rule into a specific position
-sudo nft insert rule ip box shoe postion 2 tcp dport 80 drop
-
-#drop icmp request rule
-sudo nft insert rule ip box flipflop icmp type echo-request drop
-
-===============================================================
-<-----NAT w/ IPTABLES------>
-#changing the source IP address
-iptables -t nat -A POSTROUTING -o eth0 -j SNAT --to 1.1.1.1
-
-#changing the destination IP address
-iptables -t nat -A PREROUTING -i eth0 -j DNAT --to 10.0.0.1
-
-#changing source IP and Port
-iptables -t nat -A POSTROUTING -p tcp -o eth0 -j SNAT --to 1.1.1.1:9001
-
-===============================================================
-<-----NAT w/ NFTABLES------>
-##Create the NAT table
-nft add table ip NAT
-
-##Create the NAT chains
-nft add chain ip NAT PREROUTING {type nat hook prerouting priority 0 \; }
-nft add chain ip NAT POSTROUTING {type nat hook postrouting priority 100 \; }
-
-##Create the NAT rules
-#Source NAT
-nft add rule ip NAT POSTROUTING ip saddr 10.1.0.2 oif eth0 snat 144.15.60.11
-
-#Destination NAT
-nft add rule ip NAT PREROUTING iif eth0 tcp dport { 80, 443 } dnat 10.1.0.3
-
-#Source NAT w/ masquesrade
-nft add rule ip NAT POSTROUTING ip saddr 10.1.0.0/24 oif eth0 masquerade
-
-#Destination NAT (port forwarding) with redirect
-nft add rule ip NAT PREROUTING tcp dport 80 redirect to 8080
+Step 2: 
+ssh 172.16.82.106 (T1)
 
 
 
