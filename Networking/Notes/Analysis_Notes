@@ -1,0 +1,57 @@
+#Passive OS Fingerprinting Configuration
+/etc/p0f/p0f.fp
+
+#Syntax
+sudo p0f
+
+<------WIRESHARK ANALYSIS------->
+#basic info
+statistics --> capture file properties
+
+#protocols in use
+statistics --> protocol heirarchy
+
+#visual graph
+statistics --> I/O Graph
+
+#who is talking to who 
+statistics --> conversations 
+
+#what one MAC is using 
+statistics --> endpoints 
+
+#breakdown of just IPv4 traffic
+statistics --> IPv4 statistics 
+
+#breakdown of just IPv4 traffic
+statistics --> IPv4 statistics 
+
+#breakdown of just protocol traffic
+statistics --> protocol statistics 
+
+#pulls up the search bar
+ctrl-f
+
+#download files captured in the pcap
+export objects
+
+<------TCPDUMP ANALYSIS------->
+#filter and write output to new file
+sudo tcpdump -r attack_analysis2.pcap tcp port 80 -w http.pcap
+
+<------ANOMALY DETECTION------->
+#Indicators
+.exe/executable files
+NOP sled
+
+Repeated Letters
+Well Known Signatures
+Mismatched Protocols
+Unusual traffic
+Large amounts of traffic/ unusual times
+
+#vulnerability database
+cve database (mitre)
+national vulnerability database
+exploit db
+

@@ -1,3 +1,5 @@
+https://awwapp.com/b/scjhqvx7s/
+
 <-------SCP Syntax------>
 scp student@172.16.82.106:secretstuff.txt /home/student	 #Download from remote to local
 
@@ -70,11 +72,13 @@ ssh student@172.16.82.106 -L 7000:172.16.82.112:80 -NT
 curl localhost:7000
 --or--
 wget -r localhost:7000	(will over write each time)
+--or--
+firefox localhost:7000
 --------------------------------------------------------------------
 #Example 4: Setting up tunnel from attacker to pivot ssh port
 ssh student@172.16.82.106 -L 7000:localhost:22 -NT
 ssh student@localhost -p 7000 -L 7010:172.16.82.112:80 -NT
-wget localhost 7010
+wget localhost:7010
 
 <--------------SSH Dynamic Port Forwarding------------>
 #Syntax:	*Proxychains default port is 9050*
@@ -86,19 +90,43 @@ ssh student@172.16.82.106 -D 9050 -NT		#limited to one hop
 #Using the proxy chain just created
 proxychains nc localhost 80		#or any other tcp network commands 
 --------------------------------------------------------------------
+###SSH Local and Dynamic Practice 3###
+	Network Structure
+#---Me--Pivot--FIREWALL--Bill--Brain--52.20.180.148(ESPN)--#
+ssh Pivot@104.16.181.15 -L 8000:localhost:22 -NT	#Set up entry point 1
+ssh Pivot@localhost -p 8000 -L 9000:142.16.8.41:22 -NT	#Set up entry point 2
+ssh Bill@localhost -p 9000 -L 9999:155.39.88.21:22 -NT	#Set up entry point 3
+ssh Brian@localhost -p 9999 -L 10000:52.20.180.148:80 -NT  #Set up entry point 4
+#Interact with ESPN
+ssh curl localhost:10000
+-or-
+wget localhost:10000
+-or-
+firefox localhost:10000
+#Use alternate entry ports for Dynamic ports 
+ssh Pivot@localhost -p 8000 -D 9050 -NT		#Using proxychains on pivot
+ssh Pivot@localhost -p 9000 -D 9050 -NT		#Using proxychains on bill
+ssh Pivot@localhost -p 9999 -D 9050 -NT		#Using proxychains on brian
+--------------------------------------------------------------------
+<------------SSH Remote Port Forwarding-------->
+#Syntax
+ssh -p <optional alt port> <user>@<remote ip> -R <remote bind port>:<tgt ip>:<tgt port> -NT
+--or--
+ssh -R <remote bind port>:<tgt ip>:<tgt port> -p <alt port> <user>@<remote ip> -NT
 
+#Example 1:
+net2
+ssh student@10.1.0.2 -R 1111:localhost:80 -NT
+--------------------------------------------
+#Example 2:
+Step 1: (using ssh alt port of 1111)
+blue_host-1$ ssh student@172.16.1.15 -p 1111 -R 7777:localhost:22 -NT
 
+Step 2: (using ssh alt port of 1111)
+internethost$ ssh student@172.16.1.15 -p 1111 -L 9000:localhost:7777 -NT
 
+Step 3:
+internethost$ ssh student@localhost -p 7777 -D 9050 -NT
 
-
-
-
-
-
-
-
-
-
-
-
-
+Step 4:
+internethost$ proxychains curl localhost

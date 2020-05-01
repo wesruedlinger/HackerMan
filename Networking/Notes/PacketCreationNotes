@@ -57,6 +57,18 @@ e.prefixlen= 64
 e.prefix= ""			#any hex you want
 send(a/b/c/d/e, iface="")	#iface= is my internet facing interface
 
+<-----Results in the Following-------->
+a = IPv6()
+a.dst = "fe80::ec21:3f39:49ac:bed3"                
+b = ICMPv6ND_RA()
+c = ICMPv6NDOptSrcLLAddr()
+c.lladdr = "fa:16:3e:34:e8:9b"                
+d = ICMPv6NDOptMTU()
+e = ICMPv6NDOptPrefixInfo()
+e.prefixlen= 64
+e.prefix= "abab"                
+send(a/b/c/d/e, iface="")
+
 ===============================================================
 <----------------STREAM SOCKET------------------->
 import socket
