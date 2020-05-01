@@ -1,0 +1,46 @@
+Task 4---Signatures
+#Gorgan Cyber Forces have captured targeted traffic related to specific Indicators of Compromise (IOCs) relating to Donovian Actors. They have stored the Traffic Capture on the Pivot:
+/home/activity_resources/pcaps/ids.pcap
+
+#They have also provided the following syntax for utilizing Snort, their implemented IDS Signature solution:
+sudo snort -D -i eth0 -l /var/log/snort/ -c /etc/snort/snort.conf
+
+Step 1: #scan and enumerate host
+nc -nzvw1 10.50.20.129 1-1024
+ssh student15@10.50.20.129 -p 25	#ssh into host
+ip addr					#from target (10.0.0.101/24)
+ip route				#from target ()
+find / -iname 'snort' 2>/dev/null
+
+Step 2: #read pcap on linux_ops station and id how many alert were create
+sudo snort -r /home/activity_resources/pcaps/ids.pcap
+
+Step 3: #create a new rule alerting icmp with content of DEADBEEF
+alert icmp any any -> any any (msg:"Cows";content:"|DEADBEEF|";sid:1000001;)
+
+Step 4:	#test rule (add include and path to conf file)
+sudo snort -c /etc/snort/snort.conf -r /home/activity_resources/pcaps/ids.pcap
+
+Step 5: # create rule to alert ICMP Echo Requests Detects Type 8 / Code 0 To 10.3.0.0/24
+alert icmp any any -> 10.3.0.0/24 any (msg:"DMZ Ping";itype:8 ;icode:0 ;sid:1000002;)
+
+Step 6: # test rule (add include and path to conf file)
+sudo snort -c /etc/snort/snort.conf -r /home/activity_resources/pcaps/ids.pcap
+
+Step 7: #Track 3 ssh authentication attempts within 10 seconds coming from a Specific Source using both threshold.
+alert tcp any any -> any 22 (msg:"SSH Brute"; threshold: type both, track by_src, count 3, seconds 10; sid:1000003;)
+
+Step 8:	#Track IP Protocol and RDP traffic to and from 10.1.0.0/24 regardless of the traffic flow state.
+alert ip any any <> 10.1.0.0/24 3389 (msg:"RDP you know me"; sid:1000004;)
+
+Step 9: #Create rule that detects TCP Null scan to 10.3.0.0/24 regardless of the traffic flow state.
+alert tcp any any -> 10.3.0.0/24 any (msg:"Null Scan"; flow: stateless; flags: 0; sid:1000005;)
+
+Step 10: #Detect all traffic using tcp ports (445 139) and udp ports (137 138) regardless of the traffic flow state going to 10.0.0.0/8. 
+alert tcp any any -> 10.0.0.0/8 [139,445] (msg:"WannaCry"; flow: stateless; sid:1000005;)
+alert udp any any -> 10.0.0.0/8 [137,138] (msg:"WannaCry"; flow: stateless; sid:1000006;)
+
+
+
+
+

@@ -1,0 +1,57 @@
+#What is the Berkeley Packet Filter, using tcpdump, to capture all packets with a ttl of 64 and less, utilizing the IP or IPv6 Headers?
+sudo tcpdump -r BPFCheck.pcap 'ip[8] <= 0x40 || ip6[7] <= 0x40'
+
+#What is the Berkeley Packet Filter, using tcpdump, to capture all IPv4 packets with only a Dont Fragment bit set?
+sudo tcpdump -r BPFCheck.pcap 'ip[6] & 0x40 =  0x40'
+
+#What is the Berkeley Packet Filter, using tcpdump, to capture all packets with a Source Port higher than 1024, utilizing the correct Transport Layer Headers?
+sudo tcpdump -r BPFCheck.pcap 'tcp[0:2] > 1024 || udp[0:2] > 1024'
+
+#What is the Berkeley Packet Filter, using tcpdump, to capture all Packets with UDP protocol being set, utilizing the IP or IPv6 Headers?
+sudo tcpdump -r BPFCheck.pcap 'ip[9] = 0x11 || ip6[6] = 0x11'
+
+
+#What is the Berkeley Packet Filter, using tcpdump, to capture only packets with the ACK/RST or ACK/FIN flag set, utilizing the correct Transport Layer Header?
+sudo tcpdump -r BPFCheck.pcap 'tcp[13] = 0x14 || tcp[13] = 0x11'
+
+#What is the Berkeley Packet Filter, using tcpdump, to capture all packets with an IP ID field of 213?
+sudo tcpdump -r BPFCheck.pcap 'ip[4:2] = 213'
+
+#What is the Berkeley Packet Filter, using tcpdump, to capture all packets that contain a VLAN tag?
+sudo tcpdump -r BPFCheck.pcap 'ether[12:2] = 0x8100'
+
+#What is the Berkeley Packet Filter, using tcpdump, to capture all packets relating to DNS?
+sudo tcpdump -r BPFCheck.pcap ‘tcp[0:2] = 0x0035 || tcp[2:2] = 0x0035 || udp[0:2] = 0x0035 || udp[2:2] = 0x0035‘
+
+#What is the Berkeley Packet Filter, using tcpdump, to capture all ipv4 packets with a DSCP field of 24?
+sudo tcpdump -r BPFCheck.pcap ‘ip[1] & 0xFC = 96’
+
+#What is the Berkeley Packet Filter, using tcpdump, to capture all ipv4 packets targeting just the beginning of traceroute being run on your local machine?
+sudo tcpdump -r BPFCheck.pcap ‘ip[8] = 1’
+
+=====================================================================================
+<---------Extra Practice-------->
+1) Capture any ipv4 packet with the version of 4, whether or not there are IP options. (There should be 93 matches)
+sudo tcpdump -r practice.pcap 'ip[0] & 0xF0 = 0x40' | wc -l
+
+2) Capture any ipv4 packet with a DSCP of 28. (There should be 4 matches)
+sudo tcpdump -r practice.pcap 'ip[1] & 0xFC = 0x70' | wc -l
+
+3) Capture any ipv4 packet with both the IP ID of 12345 and anytime the MF flag set regardless of what other flags may be on. (There should be 8 matches)
+sudo tcpdump -r practice.pcap 'ip[4:2] = 12345 && ip[6] & 0x20 = 0x20' | wc -l
+
+4) Capture all ARP frames. (There should be 10 matches)
+
+
+5) Capture all IPv4 or IPv6 Packets. (There should be 104 matches)
+
+
+6) Capture all ipv4 packets with a Source Port of HTTPS and only the SYN/ACK flags set. (There should be 3 matches)
+
+
+7) Capture all ipv4 packets that includes any time DHCP is used. (There are 2 ports, capture all sides of each conversation) && (There should be 16 matches)
+
+
+8) Capture all ipv4 packets that include the ICMP time exceeded messages. (There should be 5 matches)
+
+
