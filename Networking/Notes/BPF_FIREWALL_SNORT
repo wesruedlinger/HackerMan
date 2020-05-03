@@ -591,31 +591,3 @@ alert tcp any any -> 10.3.0.0/24 any (msg:"Null Scan"; flow: stateless; flags: 0
 Step 10: #Detect all traffic using tcp ports (445 139) and udp ports (137 138) regardless of the traffic flow state going to 10.0.0.0/8. 
 alert tcp any any -> 10.0.0.0/8 [139,445] (msg:"WannaCry"; flow: stateless; sid:1000005;)
 alert udp any any -> 10.0.0.0/8 [137,138] (msg:"WannaCry"; flow: stateless; sid:1000006;)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
