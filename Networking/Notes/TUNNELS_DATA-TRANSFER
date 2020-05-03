@@ -504,27 +504,3 @@ nc 10.50.23.175 9007 > criticaldata.txt
 
 NOTE:
 #On T2 (Sender)Netcat is not needed because to host is aready listening on the port of interest
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
