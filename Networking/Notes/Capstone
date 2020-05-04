@@ -1,0 +1,84 @@
+Floating ip address - 10.50.27.12
+student15	password15
+/usr/share/cctc
+whereis and which to find a tool
+
+Step 1: #ssh to capstone-net-final-1 and retrieve the pcap. scp it to linux host. enumerate
+ip addr		#ip:10.25.0.1/24
+arp -a		#(10.25.0.201) at fa:16:3e:99:1b:cb [ether] on eth0
+		 (10.25.0.5) at fa:16:3e:1c:4b:f6 [ether] on eth0
+		 (10.25.0.200) at fa:16:3e:15:ac:be [ether] on eth0
+		 (10.25.0.254) at fa:16:3e:cb:c3:2f [ether] on eth0
+		 (10.25.0.9) at fa:16:3e:37:cf:7f [ether] on eth0
+ip route	#default via 10.25.0.254 dev eth0 
+netstat -tulpn	#ports that are open
+cd /usr/share/cctc
+#pcap creds--->	login: cctc	password:dangermouse
+
+Step 2: #set tunnel to net-final-1 and dynamic
+ssh student15@10.50.27.12 -L 7000:localhost:22 -NT	#tunnel on 7000
+ssh student15@localhost -p 7000 -D 9050 -NT		#dynamic
+
+Step 3:	#scan network
+proxychains ./swissScan.sh
+
+Step 4: #telnet to .2 via proxychains
+proxychains telnet 10.25.0.2
+#repeat steps 1 and 3
+cd /usr/share/cctc	#info from config----> username: Pr1vUs3R	password:this_is_a_flag
+
+Step 5: #ssh to .3 from .2 while proxychain telnet-ed to .2
+ssh student15@10.25.0.3
+#enumerate (step 1)
+
+Step 6: #check for tools on .3 and view pcap
+tcpdump -r large-pcap.pcapng port 53  -XX	#find the domain name flag
+tcpdump -r large-pcap.pcapng port 80  -XX	#find the ip of domain flag
+tcpdump -r large-pcap.pcapng port 53  -XX	#find the number domain requests flag (count A? and/or AAAA? packets)
+#hint is info coming from .4 and you cant get on the box (.4) so listen to the wire on .3
+tcpdump port 4444 -XX
+
+Step 7:	#move to .5
+proxychains telnet 10.25.0.5	#dynamic need to be on .1
+#enumerate (step 1)
+proxychains wget -r 10.25.0.5	
+
+
+Step 8: #create tunnel to net-final-9
+ssh student15@localhost -p 7000 -L 7001:10.25.0.9:22 -NT
+#repeat steps 1 and 3
+arp -a 	(10.25.0.12) at fa:16:3e:3a:09:b3 [ether] on eth0
+ 	(10.25.0.10) at fa:16:3e:87:a7:4f [ether] on eth0
+ 	(10.25.0.11) at fa:16:3e:15:5d:c4 [ether] on eth0
+ 	(10.25.0.1) at fa:16:3e:d7:0d:4e [ether] on eth0
+
+Step 9:		#create tunnel to .10 targeting its 23
+ssh student15@localhost -p 7001 -L 7002:10.25.0.10:23 -NT
+
+Step 10:	#create remote port forward from .10 to .9
+ssh student15@10.25.0.9 -R 7777:localhost:22 -NT 
+
+Step 11:	#create tunnel from OPS to .10 through .9 remote port
+ssh student15@localhost -p 7001 -L 7003:localhost:7777 -NT
+
+Step 12:	#enumerate .10
+#repeat steps 1 and 3
+proxychains wget -r 10.25.0.10		#with the dynamic port on .9
+
+Step 13:	#get flag on .11
+proxychains wget -r ftp://10.25.0.11
+
+Step 14:	#create tunnel to .12
+#repeat steps 1 and 3
+ssh student15@localhost -p 7001 -L 7004:10.25.0.12:22 -NT
+#ssh to .12 using tunnel
+wget 10.25.0.13		#gets flag on .13
+
+Step 15:	#ensure dynamic is on .9
+proxychains telnet 10.25.0.6
+nc -v localhost 80	#manually pull webpage will on the web server
+
+
+
+
+
