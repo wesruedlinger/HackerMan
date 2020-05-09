@@ -1,4 +1,6 @@
 http://security-ctfd-1.server.kinetic:8000
+-or-
+http://10.50.24.116:8000
 username: user303A20008REEGDIOGBD600
 password: e9YErLDvFlUWxX0
 https://rustyvega.com/security

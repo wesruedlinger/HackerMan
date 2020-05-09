@@ -65,7 +65,10 @@ firefox(from ops)--> addons--> foxyproxy--> (icon in right corner) settings--> a
 for i in {224..254} ; do nc -nvzw1 192.168.150.$i 20-1024 2>&1 & done | grep -E 'OK$|succ|open$'
 
 #wget -r targets
+wget -r 192.168.150.230
 
+#Enumerate SMB
+proxychains nmap --script=smb-os-discovery 192.168.150.245
 
 
 
