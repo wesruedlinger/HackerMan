@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 for port in `seq $2 $3`
 do
 	>/dev/tcp/$1/$port &

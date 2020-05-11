@@ -62,7 +62,7 @@ print ('Authors: ',authors)
 
 ------------------------------------------------------------
 #enumerate a website
-nmap --script=http-enum 10.50.20.170
+nmap --script=http-enum 10.50.20.170 -p 80
 
 
 
