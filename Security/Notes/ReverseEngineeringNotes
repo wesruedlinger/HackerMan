@@ -1,0 +1,26 @@
+xfreerdp /v:10.50.31.135 /u:student /size:1920x1000 /clipboard
+
+objdump -d -M intel <filename>	
+
+file 	#command to see what file is the windows exe
+
+find / -type f -exec file {} \; | grep PE		#looking for windows exe on linux
+
+md5sum *
+
+strings <on-file>
+
+ltrace ./<linux exe>
+
+strace ./<linux exe>	#more info than you might want
+
+----------------------------------------------------------------
+gdb
+file <filename>
+show disa
+show disassembly-flavor
+disass main -or- loop
+break *main
+run
+ni	#next instruction
+
