@@ -1,4 +1,54 @@
-->Linux_OPS: 10.50.23.229	e9YErLDvFlUWxX0
+/////Complete Walkthrough\\\\\
+
+->Linux_OPS: 10.50.23.229	
 ->internet_grey_host: 10.50.28.45	e9YErLDvFlUWxX0
-->Network scan: 192.168.28.96/27(97-126)	YourTempPassword
-->Network scan: 192.168.150.224/27(224-254)
+->Donovina-Grey-Host: 192.168.28.120
+->Network scan: 192.168.28.96/27(97-126)	
+->Network scan: 192.168.150.224/27(224-254)	
+->Donovian_Webserver: 192.168.28.111 (SSH)2222		comrade : StudentWebExploitPassword	
+
+1. Run some ennumeration commmands on pivot remotely
+ssh 10.50.28.45 ip a && ss -tulpn && ip ne && ls -lisa && which nc && which nmap
+
+2. Scan the network pivot can see. (be sure to set ip range in script)
+ssh 10.50.28.45 -T /bin/bash < ./all24.sh	#use a non-interactive script
+
+3. While scan is running set up tunnel to pivot and dynamic port forward
+ssh 10.50.28.45 -L 8000:localhost:22 -NTf
+ssh localhost -p 8000 -D 9050 -NT
+ctl+z
+bg %1
+
+4. If nc and/or nmap on pivot, scp Toolbox over
+scp -r HackerMan/Security/Toolbox 10.50.28.45:
+
+5. Banner grab IPs w/ RHPs
+telnet 192.168.28.100 2222
+
+6. ssh to pivot && wget IPs w/ 80 && 21
+ssh localhost -p 8000
+wget -r ftp://192.168.28.105
+wget -r 192.168.28.111
+
+7. webscrap IPs w/ port 80
+proxychains nmap -Pn -sT 192.168.28.111 -T4 -v --script http-enum
+
+8. ensure dynamic port is on pivot, open web browser, configure to use localhost 9050, navigate to website and enumerate
+
+9. use creds found on ftp .105 pull to set up tunnel to .120 and run initial enumeration commands
+ssh localhost -p 8000 -L 8001:192.168.28.120:4242 -NTf
+ssh localhost -p 8001 ip a && ss -tulpn && ip ne && ls -lisa && which nc && which nmap
+
+10. scp Toolbox to .120 via tunnel and run scan remotely
+ssh localhost -p 8001 -T /bin/bash < ./all24.sh
+scp -P 8001 -r HackerMan/Security/Toolbox localhost:
+
+11. move dynamic port to tunnel port of the next web server
+
+12. 
+
+
+
+
+
+
