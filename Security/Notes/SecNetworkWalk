@@ -1,11 +1,28 @@
 /////Complete Walkthrough\\\\\
 
-->Linux_OPS: 10.50.23.229	
+http://security-ctfd-1.server.kinetic:8000 -or- http://10.50.24.116:8000
+username: user303A20008REEGDIOGBD600
+password: Lim
+
+Windows:
+Private: 192.168.65.10
+Float: 10.50.31.135
+xfreerdp /v:10.50.31.135 /u:student /size:1920x1000 /clipboard
+Password: StudentOpsPassword
+
+Linux:
+Private: 192.168.65.20			Lim
+Float: 10.50.23.229	
+
 ->internet_grey_host: 10.50.28.45	e9YErLDvFlUWxX0
 ->Donovina-Grey-Host: 192.168.28.120
 ->Network scan: 192.168.28.96/27(97-126)	
 ->Network scan: 192.168.150.224/27(224-254)	
-->Donovian_Webserver: 192.168.28.111 (SSH)2222		comrade : StudentWebExploitPassword	
+->Donovian_Webserver: 192.168.28.111 (SSH)2222		comrade :: StudentWebExploitPassword
+->Donovian-Terminal: 192.168.28.105 (SSH)2222 		comrade :: StudentReconPassword	
+->Donovian_MI_websvr: 10.100.28.40 4444(SSH)
+->donovian-nla: 10.100.28.48:80
+->T3(for exploit dev): 192.168.150.245
 
 1. Run some ennumeration commmands on pivot remotely
 ssh 10.50.28.45 ip a && ss -tulpn && ip ne && ls -lisa && which nc && which nmap

