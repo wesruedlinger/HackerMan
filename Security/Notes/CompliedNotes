@@ -9,6 +9,7 @@ nmap -Pn -sT <IP> -T4 -v
     --script http-grep
     --script http-enum				#enumerate website (append -p 80)
     --script banner -p <port>
+proxychains nmap -Pn -sT <IP> -p 80 --script=http-enum		#w/ proxychains, specify port
 
 proxychains nikto -host <IP>			#same as http-enum
 -or-
@@ -18,7 +19,7 @@ getend services <port>				#resolve a ports service through nsswitch.conf
 
 ssh user@ip -t /bin/bash < all24.sh 		#runs the non-interactive script remotely from target box (-t /bin/bash will try to force bash shell)
 
-ssh user@<ip> cat /etc/passwd			#run a single command remotely (and | and && commmands)
+ssh user@<ip> cat /etc/passwd			#run a single command remotely (can | to filter output)
 
 //Scan script for IPs
 for i in {1..254}; do nc -nzvw1 192.168.1.$i 20-23 80 2>&1 & done | grep -E 'succ|open$|OK$'
@@ -263,6 +264,10 @@ shutdown -r
 
 REGISTRY KEY for usernames/passwords
 hklm/software/microsoft/windows nt/currentversion/winlogon
+
+////////// Linux Exploitation \\\\\\\\
+
+https://gtfobins.github.io/
 
 ////// Post Exploitation (Actions on box)\\\\\\\\
 
