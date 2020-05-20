@@ -4,7 +4,7 @@ http://security-ctfd-1.server.kinetic:8000 -or- http://10.50.24.116:8000
 username: user303A20008REEGDIOGBD600		password: Lim
 
 Windows:	Private: 192.168.65.10		Float: 10.50.31.135
-xfreerdp /v:10.50.31.135 /u:student /size:1920x1000 /clipboard
+xfreerdp /v:10.50.31.135 /u:student /size:1920x1000 /clipboard +home-drive
 Password: StudentOpsPassword
 
 Linux:
@@ -20,6 +20,10 @@ Float: 10.50.23.229
 ->Donovian_MI_websvr: 10.100.28.40 4444(SSH)
 ->donovian-nla: 10.100.28.48:80
 ->T3(for exploit dev): 192.168.150.245
+->Donovian_Extranet: 192.168.28.100 2222(SSH)		comrade :: StudentMidwayPassword
+->Donovian-Intranet: 192.168.150.253 3201(SSH)		comrade :: StudentMidwayPassword
+->192.168.56.1   badguy
+->192.168.28.9
 
 -------------------------------------------------------------------------------------
 1. Run some ennumeration commmands on pivot remotely
@@ -62,6 +66,9 @@ scp -P 8001 -r HackerMan/Security/Toolbox localhost:
 
 12. 
 
+----------------------BREAK TO POST EXPLOIT FLAGS--------------------
+1. ssh to Donvian_Extranet
+2. scp the png found on desktop
 
 
 
