@@ -14,6 +14,7 @@ https://en.wikibooks.org/wiki/OpenSSH/Cookbook/Tunnels
 https://www.vulnhub.com/entry/exploit-exercises-protostar-v2,32/
 https://captmeelo.com/exploitdev/osceprep/2018/06/27/vulnserver-trun.html
 http://10.50.25.12/uploads/
+http://0x90909090.blogspot.com/2016/06/creating-backdoor-in-pam-in-5-line-of.html
 
 /////////HTTP reponse codes////////
 10X == Informational
@@ -317,3 +318,4 @@ for i in "${arr[@]}"
          done | grep -E "open|succ"
 done
 -----------------------------
+dpkg -l | grep pam

