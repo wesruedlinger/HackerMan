@@ -23,7 +23,9 @@ Float: 10.50.23.229
 ->Donovian_Extranet: 192.168.28.100 2222(SSH)		comrade :: StudentMidwayPassword
 ->Donovian-Intranet: 192.168.150.253 3201(SSH)		comrade :: StudentMidwayPassword
 ->192.168.56.1   badguy
-->192.168.28.9
+->(Windows Box)192.168.28.9				comrade :: StudentMidwayPassword
+->donovian-linux-private-also: 192.168.28.27		comrade :: StudentPrivPassword
+->donovian-linux-private: 192.168.28.12			comrade :: StudentPrivPassword
 
 -------------------------------------------------------------------------------------
 1. Run some ennumeration commmands on pivot remotely
@@ -69,6 +71,30 @@ scp -P 8001 -r HackerMan/Security/Toolbox localhost:
 ----------------------BREAK TO POST EXPLOIT FLAGS--------------------
 1. ssh to Donvian_Extranet
 2. scp the png found on desktop
+
+
+ssh comrade@localhost -p 8002 -L 8888:192.168.28.9:3389 -NTf
+xfreerdp /v:localhost:8888 /u:comrade /size:1920x1000 /clipboard +home-drive
+
+
+----------------------BREAK TO Linux PRIV ESC FLAGS--------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

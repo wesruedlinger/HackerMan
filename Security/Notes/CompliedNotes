@@ -269,6 +269,8 @@ hklm/software/microsoft/windows nt/currentversion/winlogon
 
 https://gtfobins.github.io/
 
+watch -n0 "ss -nutlp"
+
 ////// Post Exploitation (Actions on box)\\\\\\\\
 
 cat /etc/hosts					#looking for next box to scan

