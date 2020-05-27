@@ -1,0 +1,14 @@
+-> target1: 10.50.25.249
+root:x:0:0:root:/root:/bin/bash
+user2:x:1001:1001::/home/user2:/bin/sh
+
+192.168.28.181 WebApp 
+
+user2	::	RntyrfVfNER78		* EaglesIsARE78 *
+user3	::	Obo4GURRnccyrf
+Lee_Roth ::	anotherpassword4THEages
+
+
+192.168.28.179
+Lroth	::	anotherpassword4THEages
+xfreerdp /v:localhost:7001 /u:Lroth /p:anotherpassword4THEages /size:1920x1000 /clipboard +home-drive

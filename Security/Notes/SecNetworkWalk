@@ -27,6 +27,7 @@ Float: 10.50.23.229
 ->donovian-linux-private-also: 192.168.28.27		comrade :: StudentPrivPassword
 ->donovian-linux-private: 192.168.28.12			comrade :: StudentPrivPassword
 
+grep -Er '[0-9a-zA-Z]{20}' | grep -vE 'fonts|{*}|js|Binary|css'		#for CTFD only
 -------------------------------------------------------------------------------------
 1. Run some ennumeration commmands on pivot remotely
 ssh 10.50.28.45 ip a && ss -tulpn && ip ne && ls -lisa && which nc && which nmap
