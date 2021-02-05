@@ -1,34 +1,3 @@
-/////Complete Walkthrough\\\\\
-
-http://security-ctfd-1.server.kinetic:8000 -or- http://10.50.24.116:8000
-username: user303A20008REEGDIOGBD600		password: Lim
-
-Windows:	Private: 192.168.65.10		Float: 10.50.31.135
-xfreerdp /v:10.50.31.135 /u:student /size:1920x1000 /clipboard +home-drive
-Password: StudentOpsPassword
-
-Linux:
-Private: 192.168.65.20			Lim
-Float: 10.50.23.229	
-
-->internet_grey_host: 10.50.28.45			e9YErLDvFlUWxX0
-->Donovina-Grey-Host: 192.168.28.120			YourTempPassword
-->Network scan: 192.168.28.96/27(97-126)	
-->Network scan: 192.168.150.224/27(224-254)	
-->Donovian_Webserver: 192.168.28.111 (SSH)2222		comrade :: StudentWebExploitPassword
-->Donovian-Terminal: 192.168.28.105 (SSH)2222 		comrade :: StudentReconPassword	
-->Donovian_MI_websvr: 10.100.28.40 4444(SSH)
-->donovian-nla: 10.100.28.48:80
-->T3(for exploit dev): 192.168.150.245
-->Donovian_Extranet: 192.168.28.100 2222(SSH)		comrade :: StudentMidwayPassword
-->Donovian-Intranet: 192.168.150.253 3201(SSH)		comrade :: StudentMidwayPassword
-->192.168.56.1   badguy
-->(Windows Box)192.168.28.9				comrade :: StudentMidwayPassword
-->donovian-linux-private-also: 192.168.28.27		comrade :: StudentPrivPassword
-->donovian-linux-private: 192.168.28.12			comrade :: StudentPrivPassword
-
-grep -Er '[0-9a-zA-Z]{20}' | grep -vE 'fonts|{*}|js|Binary|css'		#for CTFD only
--------------------------------------------------------------------------------------
 1. Run some ennumeration commmands on pivot remotely
 ssh 10.50.28.45 ip a && ss -tulpn && ip ne && ls -lisa && which nc && which nmap
 
@@ -65,20 +34,6 @@ ssh localhost -p 8001 ip a && ss -tulpn && ip ne && ls -lisa && which nc && whic
 ssh localhost -p 8001 -T /bin/bash < ./all24.sh
 scp -P 8001 -r HackerMan/Security/Toolbox localhost:
 
-11. move dynamic port to tunnel port of the next web server
-
-12. 
-
-----------------------BREAK TO POST EXPLOIT FLAGS--------------------
-1. ssh to Donvian_Extranet
-2. scp the png found on desktop
-
-
-ssh comrade@localhost -p 8002 -L 8888:192.168.28.9:3389 -NTf
-xfreerdp /v:localhost:8888 /u:comrade /size:1920x1000 /clipboard +home-drive
-
-
-----------------------BREAK TO Linux PRIV ESC FLAGS--------------------
 
 
 
