@@ -8,6 +8,8 @@ echo "Enter ending host range: "
 read end
 echo "Enter ports space-delimited: "
 read ports
+echo "File Name: "
+read filename
 
 clear
 
@@ -35,7 +37,7 @@ for ((i=$start; $i<=$end;i++))
 do
     for t in "${ADDRS[@]}"; do
         printf "\033[0;0HWorking on host $net.$i port $t"
-        nc -nzv -w1 $net.$i $t 2>&1 | grep -E "succ|open$" >> test2.txt &
+        nc -nzv -w1 $net.$i $t 2>&1 | grep -E "succ|open$" >> $filename &
     done
 done
 echo -E "\n"
